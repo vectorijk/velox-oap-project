@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 
 #include "velox/common/base/Nulls.h"
-#include "velox/vector/arrow/Bridge.h"
+#include "velox/vector/arrow/c/Bridge.h"
 
 namespace {
 
