@@ -57,46 +57,49 @@ class SubstraitVeloxPlanConverter {
       const ::substrait::FilterRel& filterRel,
       memory::MemoryPool* pool);
 
-  /// Convert Substrait ReadRel into Velox PlanNode.
-  /// Index: the index of the partition this item belongs to.
-  /// Starts: the start positions in byte to read from the items.
-  /// Lengths: the lengths in byte to read from the items.
-  core::PlanNodePtr toVeloxPlan(
-      const ::substrait::ReadRel& readRel,
-      memory::MemoryPool* pool,
-      std::shared_ptr<SplitInfo>& splitInfo);
-
   /// Convert Substrait ReadRel into Velox Values Node.
   core::PlanNodePtr toVeloxPlan(
       const ::substrait::ReadRel& readRel,
-      memory::MemoryPool* pool,
       const RowTypePtr& type);
-
-  /// Convert Substrait Rel into Velox PlanNode.
-  core::PlanNodePtr toVeloxPlan(
-      const ::substrait::Rel& rel,
-      memory::MemoryPool* pool);
-
-  /// Convert Substrait RelRoot into Velox PlanNode.
-  core::PlanNodePtr toVeloxPlan(
-      const ::substrait::RelRoot& root,
-      memory::MemoryPool* pool);
-
-  /// Convert Substrait Plan into Velox PlanNode.
-  core::PlanNodePtr toVeloxPlan(
-      const ::substrait::Plan& substraitPlan,
-      memory::MemoryPool* pool);
 
   /// Check the Substrait type extension only has one unknown extension.
   bool checkTypeExtension(const ::substrait::Plan& substraitPlan);
 
-  /// Construct the function map between the index and the Substrait function
-  /// name.
-  void constructFunctionMap(const ::substrait::Plan& substraitPlan);
+  /// Convert Substrait ReadRel into Velox PlanNode.
+  /// Index: the index of the partition this item belongs to.
+  /// Starts: the start positions in byte to read from the items.
+  /// Lengths: the lengths in byte to read from the items.
+  std::shared_ptr<const core::PlanNode> toVeloxPlan(
+      const ::substrait::ReadRel& sRead,
+      u_int32_t& index,
+      std::vector<std::string>& paths,
+      std::vector<u_int64_t>& starts,
+      std::vector<u_int64_t>& lengths);
 
-  /// Return the function map used by this plan converter.
-  const std::unordered_map<uint64_t, std::string>& getFunctionMap() const {
+  /// Used to convert Substrait Rel into Velox PlanNode.
+  std::shared_ptr<const core::PlanNode> toVeloxPlan(
+      const ::substrait::Rel& sRel);
+
+  /// Used to convert Substrait RelRoot into Velox PlanNode.
+  std::shared_ptr<const core::PlanNode> toVeloxPlan(
+      const ::substrait::RelRoot& sRoot);
+
+  /// Used to convert Substrait Plan into Velox PlanNode.
+  std::shared_ptr<const core::PlanNode> toVeloxPlan(
+      const ::substrait::Plan& sPlan);
+
+  /// Used to construct the function map between the index
+  /// and the Substrait function name.
+  void constructFuncMap(const ::substrait::Plan& sPlan);
+
+  /// Will return the function map used by this plan converter.
+  const std::unordered_map<uint64_t, std::string>& getFunctionMap() {
     return functionMap_;
+  }
+
+  /// Will return the index of Partition to be scanned.
+  u_int32_t getPartitionIndex() {
+    return partitionIndex_;
   }
 
   /// Return the splitInfo map used by this plan converter.
@@ -112,9 +115,69 @@ class SubstraitVeloxPlanConverter {
   /// name>:<arg_type0>_<arg_type1>_..._<arg_typeN>
   const std::string& findFunction(uint64_t id) const;
 
+  /// Used to insert certain plan node as input. The plan node
+  /// id will start from the setted one.
+  void insertInputNode(
+      uint64_t inputIdx,
+      const std::shared_ptr<const core::PlanNode>& inputNode,
+      int planNodeId) {
+    inputNodesMap_[inputIdx] = inputNode;
+    planNodeId_ = planNodeId;
+  }
+
+  /// Used to check if ReadRel specifies an input of stream.
+  /// If yes, the index of input stream will be returned.
+  /// If not, -1 will be returned.
+  int32_t streamIsInput(const ::substrait::ReadRel& sRel);
+
+  /// Multiple conditions are connected to a binary tree structure with
+  /// the relation key words, including AND, OR, and etc. Currently, only
+  /// AND is supported. This function is used to extract all the Substrait
+  /// conditions in the binary tree structure into a vector.
+  void flattenConditions(
+      const ::substrait::Expression& sFilter,
+      std::vector<::substrait::Expression_ScalarFunction>& scalarFunctions);
+
+  /// Used to find the function specification in the constructed function map.
+  std::string findFuncSpec(uint64_t id);
+
  private:
-  /// Returns unique ID to use for plan node. Produces sequential numbers
-  /// starting from zero.
+  /// The Partition index.
+  u_int32_t partitionIndex_;
+
+  /// The file paths to be scanned.
+  std::vector<std::string> paths_;
+
+  /// The file starts in the scan.
+  std::vector<u_int64_t> starts_;
+
+  /// The lengths to be scanned.
+  std::vector<u_int64_t> lengths_;
+
+  /// The unique identification for each PlanNode.
+  int planNodeId_ = 0;
+
+  /// The map storing the relations between the function id and the function
+  /// name. Will be constructed based on the Substrait representation.
+  std::unordered_map<uint64_t, std::string> functionMap_;
+
+  /// The map storing the pre-built plan nodes which can be accessed through
+  /// index. This map is only used when the computation of a Substrait plan
+  /// depends on other input nodes.
+  std::unordered_map<uint64_t, std::shared_ptr<const core::PlanNode>>
+      inputNodesMap_;
+
+  /// The Substrait parser used to convert Substrait representations into
+  /// recognizable representations.
+  std::shared_ptr<SubstraitParser> subParser_{
+      std::make_shared<SubstraitParser>()};
+
+  /// The Expression converter used to convert Substrait representations into
+  /// Velox expressions.
+  std::shared_ptr<SubstraitVeloxExprConverter> exprConverter_;
+
+  /// A function returning current function id and adding the plan node id by
+  /// one once called.
   std::string nextPlanNodeId();
 
   /// Used to convert Substrait Filter into Velox SubfieldFilters which will
@@ -124,33 +187,29 @@ class SubstraitVeloxPlanConverter {
       const std::vector<TypePtr>& inputTypeList,
       const ::substrait::Expression& substraitFilter);
 
-  /// Multiple conditions are connected to a binary tree structure with
-  /// the relation key words, including AND, OR, and etc. Currently, only
-  /// AND is supported. This function is used to extract all the Substrait
-  /// conditions in the binary tree structure into a vector.
-  void flattenConditions(
-      const ::substrait::Expression& substraitFilter,
-      std::vector<::substrait::Expression_ScalarFunction>& scalarFunctions);
-
-  /// The Substrait parser used to convert Substrait representations into
-  /// recognizable representations.
-  std::shared_ptr<SubstraitParser> substraitParser_{
-      std::make_shared<SubstraitParser>()};
-
-  /// The Expression converter used to convert Substrait representations into
-  /// Velox expressions.
-  std::shared_ptr<SubstraitVeloxExprConverter> exprConverter_;
-
-  /// The unique identification for each PlanNode.
-  int planNodeId_ = 0;
-
-  /// The map storing the relations between the function id and the function
-  /// name. Will be constructed based on the Substrait representation.
-  std::unordered_map<uint64_t, std::string> functionMap_;
-
   /// Mapping from leaf plan node ID to splits.
   std::unordered_map<core::PlanNodeId, std::shared_ptr<SplitInfo>>
       splitInfoMap_;
+  /// Used to check if some of the input columns of Aggregation
+  /// should be combined into a single column. Currently, this case occurs in
+  /// final Average. The phase of Aggregation will also be set.
+  bool needsRowConstruct(
+      const ::substrait::AggregateRel& sAgg,
+      core::AggregationNode::Step& aggStep);
+
+  /// Used to convert AggregateRel into Velox plan node.
+  /// This method will add a Project node before Aggregation to combine columns.
+  std::shared_ptr<const core::PlanNode> toVeloxAggWithRowConstruct(
+      const ::substrait::AggregateRel& sAgg,
+      const std::shared_ptr<const core::PlanNode>& childNode,
+      const core::AggregationNode::Step& aggStep);
+
+  /// Used to convert AggregateRel into Velox plan node.
+  /// The output of child node will be used as the input of Aggregation.
+  std::shared_ptr<const core::PlanNode> toVeloxAgg(
+      const ::substrait::AggregateRel& sAgg,
+      const std::shared_ptr<const core::PlanNode>& childNode,
+      const core::AggregationNode::Step& aggStep);
 };
 
 } // namespace facebook::velox::substrait
