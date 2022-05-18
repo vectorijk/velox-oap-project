@@ -86,7 +86,8 @@ class SubstraitVeloxPlanConverter {
       u_int32_t& index,
       std::vector<std::string>& paths,
       std::vector<u_int64_t>& starts,
-      std::vector<u_int64_t>& lengths);
+      std::vector<u_int64_t>& lengths,
+      int& fileFormat);
 
   /// Used to convert Substrait Rel into Velox PlanNode.
   std::shared_ptr<const core::PlanNode> toVeloxPlan(
@@ -119,6 +120,11 @@ class SubstraitVeloxPlanConverter {
   const std::unordered_map<core::PlanNodeId, std::shared_ptr<SplitInfo>>&
   splitInfos() const {
     return splitInfoMap_;
+  }
+  
+  /// Will return the file format of the files to be scanned.
+  int getFileFormat() {
+    return fileFormat_;
   }
 
   /// Looks up a function by ID and returns function name if found. Throws if
@@ -387,6 +393,9 @@ class SubstraitVeloxPlanConverter {
 
   /// The lengths to be scanned.
   std::vector<u_int64_t> lengths_;
+  
+  // The file format of the files to be scanned.
+  int fileFormat_;
 
   /// The unique identification for each PlanNode.
   int planNodeId_ = 0;
