@@ -83,11 +83,7 @@ class SubstraitVeloxPlanConverter {
   /// Lengths: the lengths in byte to read from the items.
   std::shared_ptr<const core::PlanNode> toVeloxPlan(
       const ::substrait::ReadRel& sRead,
-      u_int32_t& index,
-      std::vector<std::string>& paths,
-      std::vector<u_int64_t>& starts,
-      std::vector<u_int64_t>& lengths,
-      int& fileFormat);
+      std::shared_ptr<SplitInfo>& splitInfo);
 
   /// Used to convert Substrait Rel into Velox PlanNode.
   std::shared_ptr<const core::PlanNode> toVeloxPlan(
@@ -111,28 +107,11 @@ class SubstraitVeloxPlanConverter {
     return functionMap_;
   }
 
-  /// Will return the index of Partition to be scanned.
-  u_int32_t getPartitionIndex() {
-    return partitionIndex_;
-  }
-
   /// Return the splitInfo map used by this plan converter.
   const std::unordered_map<core::PlanNodeId, std::shared_ptr<SplitInfo>>&
   splitInfos() const {
     return splitInfoMap_;
   }
-  
-  /// Will return the file format of the files to be scanned.
-  int getFileFormat() {
-    return fileFormat_;
-  }
-
-  /// Looks up a function by ID and returns function name if found. Throws if
-  /// function with specified ID doesn't exist. Returns a compound
-  /// function specification consisting of the function name and the input
-  /// types. The format is as follows: <function
-  /// name>:<arg_type0>_<arg_type1>_..._<arg_typeN>
-  const std::string& findFunction(uint64_t id) const;
 
   /// Used to insert certain plan node as input. The plan node
   /// id will start from the setted one.
@@ -382,21 +361,6 @@ class SubstraitVeloxPlanConverter {
       const std::shared_ptr<const core::PlanNode>& childNode,
       const core::AggregationNode::Step& aggStep);
 
-  /// The Partition index.
-  u_int32_t partitionIndex_;
-
-  /// The file paths to be scanned.
-  std::vector<std::string> paths_;
-
-  /// The file starts in the scan.
-  std::vector<u_int64_t> starts_;
-
-  /// The lengths to be scanned.
-  std::vector<u_int64_t> lengths_;
-  
-  // The file format of the files to be scanned.
-  int fileFormat_;
-
   /// The unique identification for each PlanNode.
   int planNodeId_ = 0;
 
@@ -407,6 +371,7 @@ class SubstraitVeloxPlanConverter {
   /// The map storing the split stats for each PlanNode.
   std::unordered_map<core::PlanNodeId, std::shared_ptr<SplitInfo>>
       splitInfoMap_;
+
   /// The map storing the pre-built plan nodes which can be accessed through
   /// index. This map is only used when the computation of a Substrait plan
   /// depends on other input nodes.
