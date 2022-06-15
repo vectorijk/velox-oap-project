@@ -295,11 +295,12 @@ core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
 
   const auto& inputType = childNode->outputType();
   const auto& sExpr = filterRel.condition();
+  std::shared_ptr<const core::PlanNode>
 
-  return std::make_shared<core::FilterNode>(
-      nextPlanNodeId(),
-      exprConverter_->toVeloxExpr(sExpr, inputType),
-      childNode);
+      return std::make_shared<core::FilterNode>(
+          nextPlanNodeId(),
+          exprConverter_->toVeloxExpr(sExpr, inputType),
+          childNode);
 }
 
 core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
