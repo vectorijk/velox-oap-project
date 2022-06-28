@@ -190,7 +190,7 @@ std::shared_ptr<const core::PlanNode> SubstraitVeloxPlanConverter::toVeloxAgg(
 
   // Parse measures and get the aggregate expressions.
   // Each measure represents one aggregate expression.
-  std::vector<std::shared_ptr<const core::CallTypedExpr>> aggExprs;
+  std::vector<core::CallTypedExprPtr> aggExprs;
   aggExprs.reserve(sAgg.measures().size());
 
   for (const auto& smea : sAgg.measures()) {
@@ -301,6 +301,25 @@ core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
           nextPlanNodeId(),
           exprConverter_->toVeloxExpr(sExpr, inputType),
           childNode);
+}
+bool isPushDownSupportedByFormat(
+    const dwio::common::FileFormat& format,
+    connector::hive::SubfieldFilters& subfieldFilters) {
+  switch (format) {
+    case dwio::common::FileFormat::PARQUET:
+    case dwio::common::FileFormat::ORC:
+    case dwio::common::FileFormat::DWRF:
+    case dwio::common::FileFormat::RC:
+    case dwio::common::FileFormat::RC_TEXT:
+    case dwio::common::FileFormat::RC_BINARY:
+    case dwio::common::FileFormat::TEXT:
+    case dwio::common::FileFormat::JSON:
+    case dwio::common::FileFormat::ALPHA:
+    case dwio::common::FileFormat::UNKNOWN:
+    default:
+      break;
+  }
+  return true;
 }
 
 core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
@@ -502,7 +521,6 @@ core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
       children.emplace_back(
           setVectorFromVariants(outputChildType, batchChild, pool_));
     }
-
     vectors.emplace_back(
         std::make_shared<RowVector>(pool_, type, nullptr, batchSize, children));
   }
@@ -737,10 +755,10 @@ void SubstraitVeloxPlanConverter::flattenConditions(
   switch (typeCase) {
     case ::substrait::Expression::RexTypeCase::kScalarFunction: {
       auto sFunc = substraitFilter.scalar_function();
-      auto filterNameSpec = substraitParser_->findFunctionSpec(
+      auto filterNameSpec = subParser_->findSubstraitFuncSpec(
           functionMap_, sFunc.function_reference());
       // TODO: Only and relation is supported here.
-      if (substraitParser_->getFunctionName(filterNameSpec) == "and") {
+      if (subParser_->getSubFunctionName(filterNameSpec) == "and") {
         for (const auto& sCondition : sFunc.args()) {
           flattenConditions(sCondition, scalarFunctions);
         }
@@ -1398,7 +1416,6 @@ void SubstraitVeloxPlanConverter::constructFunctionMap(
   exprConverter_ =
       std::make_shared<SubstraitVeloxExprConverter>(pool_, functionMap_);
 }
-
 bool SubstraitVeloxPlanConverter::checkTypeExtension(
     const ::substrait::Plan& substraitPlan) {
   for (const auto& sExtension : substraitPlan.extensions()) {
