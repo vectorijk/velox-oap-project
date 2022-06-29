@@ -47,13 +47,13 @@ sudo --preserve-env apt install -y \
   liblz4-dev \
   libzstd-dev \
   libre2-dev \
-  libsnappy-dev \
-  liblzo2-dev \
-  protobuf-compiler \
   bison \
   flex \
-  tzdata
-
+  tzdata \
+  libsnappy-dev \
+  liblzo2-dev \
+  protobuf-compiler
+  
 function run_and_time {
   time "$@"
   { echo "+ Finished running $*"; } 2> /dev/null
