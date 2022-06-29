@@ -484,6 +484,7 @@ std::unique_ptr<Filter> notNullOrTrue(bool nullAllowed) {
   }
   return std::make_unique<IsNotNull>();
 }
+} // namespace
 
 std::unique_ptr<Filter> createDoubleValues(
     const std::vector<double>& values,
@@ -583,7 +584,7 @@ std::unique_ptr<Filter> createBigintValuesFilter(
   return std::make_unique<BigintValuesUsingHashTable>(
       min, max, values, nullAllowed);
 }
-} // namespace
+
 
 std::unique_ptr<Filter> createBigintValues(
     const std::vector<int64_t>& values,
