@@ -431,16 +431,16 @@ TEST_F(Substrait2VeloxPlanConversionTest, q6FirstStageTest) {
   auto veloxConverter = std::make_shared<VeloxConverter>();
   genLineitemORC(veloxConverter);
   // Find and deserialize Substrait plan json file.
-  std::string planPath =
+  std::string subPlanPath =
       getDataFilePath("velox/substrait/tests", "data/q6_first_stage.json");
-
-  // Read q6_first_stage.json and resume the Substrait plan.
-  ::substrait::Plan substraitPlan;
-  JsonToProtoConverter::readFromFile(planPath, substraitPlan);
-
-  // Convert to Velox PlanNode.
-  facebook::velox::substrait::SubstraitVeloxPlanConverter planConverter;
-  auto planNode = planConverter.toVeloxPlan(substraitPlan, pool_.get());
+  auto resIter = veloxConverter->getResIter(subPlanPath);
+  while (resIter->HasNext()) {
+    auto rv = resIter->Next();
+    auto size = rv->size();
+    ASSERT_EQ(size, 1);
+    std::string res = rv->toString(0);
+    ASSERT_EQ(res, "{13613.1921}");
+  }
 }
 
 // This test will firstly generate mock TPC-H lineitem ORC file. Then, Velox's

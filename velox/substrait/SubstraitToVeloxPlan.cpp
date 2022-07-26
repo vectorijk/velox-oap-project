@@ -166,7 +166,7 @@ std::shared_ptr<const core::PlanNode> SubstraitVeloxPlanConverter::toVeloxPlan(
       joinType = core::JoinType::kRight;
       break;
     case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_SEMI:
-      joinType = core::JoinType::kSemi;
+      joinType = core::JoinType::kLeftSemi;
       break;
     case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_ANTI:
       joinType = core::JoinType::kAnti;
@@ -400,6 +400,8 @@ std::shared_ptr<const core::PlanNode> SubstraitVeloxPlanConverter::toVeloxPlan(
 
   // Parse local files and construct split info.
   if (sRead.has_local_files()) {
+    using SubstraitFileFormatCase =
+        ::substrait::ReadRel_LocalFiles_FileOrFiles::FileFormatCase;
     const auto& fileList = sRead.local_files().items();
     splitInfo->paths.reserve(fileList.size());
     splitInfo->starts.reserve(fileList.size());
@@ -410,13 +412,15 @@ std::shared_ptr<const core::PlanNode> SubstraitVeloxPlanConverter::toVeloxPlan(
       splitInfo->paths.emplace_back(file.uri_file());
       splitInfo->starts.emplace_back(file.start());
       splitInfo->lengths.emplace_back(file.length());
-      auto format = file.format();
-      if (format == 2 || format == 3) {
-        splitInfo->format = dwio::common::FileFormat::DWRF;
-      } else if (format == 1) {
-        splitInfo->format = dwio::common::FileFormat::PARQUET;
-      } else {
-        splitInfo->format = dwio::common::FileFormat::UNKNOWN;
+      switch (file.file_format_case()) {
+        case SubstraitFileFormatCase::kOrc:
+          splitInfo->format = dwio::common::FileFormat::DWRF;
+          break;
+        case SubstraitFileFormatCase::kParquet:
+          splitInfo->format = dwio::common::FileFormat::PARQUET;
+          break;
+        default:
+          splitInfo->format = dwio::common::FileFormat::UNKNOWN;
       }
     }
   }
