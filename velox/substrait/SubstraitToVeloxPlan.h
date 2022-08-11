@@ -90,12 +90,12 @@ class SubstraitVeloxPlanConverter {
 
   /// Used to convert Substrait Plan into Velox PlanNode.
   std::shared_ptr<const core::PlanNode> toVeloxPlan(
-      const ::substrait::Plan& sPlan);
+      const ::substrait::Plan& substraitPlan);
 
   /// Used to construct the function map between the index
   /// and the Substrait function name. Initialize the expression
   /// converter based on the constructed function map.
-  void constructFuncMap(const ::substrait::Plan& sPlan);
+  void constructFunctionMap(const ::substrait::Plan& substraitPlan);
 
   /// Will return the function map used by this plan converter.
   const std::unordered_map<uint64_t, std::string>& getFunctionMap() {

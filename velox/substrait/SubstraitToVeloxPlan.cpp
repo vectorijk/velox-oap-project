@@ -585,27 +585,31 @@ core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
 }
 
 std::shared_ptr<const core::PlanNode> SubstraitVeloxPlanConverter::toVeloxPlan(
-    const ::substrait::Plan& sPlan) {
+    const ::substrait::Plan& substraitPlan) {
+  VELOX_CHECK(
+      checkTypeExtension(substraitPlan),
+      "The type extension only have unknown type.")
   // Construct the function map based on the Substrait representation,
   // and initialize the expression converter with it.
-  constructFuncMap(sPlan);
+  constructFunctionMap(substraitPlan);
 
   // In fact, only one RelRoot or Rel is expected here.
-  for (const auto& sRel : sPlan.relations()) {
-    if (sRel.has_root()) {
-      return toVeloxPlan(sRel.root());
-    }
-    if (sRel.has_rel()) {
-      return toVeloxPlan(sRel.rel());
-    }
+  VELOX_CHECK_EQ(substraitPlan.relations_size(), 1);
+  const auto& sRel = substraitPlan.relations(0);
+  if (sRel.has_root()) {
+    return toVeloxPlan(sRel.root());
   }
+  if (sRel.has_rel()) {
+    return toVeloxPlan(sRel.rel());
+  }
+
   VELOX_FAIL("RelRoot or Rel is expected in Plan.");
 }
 
-void SubstraitVeloxPlanConverter::constructFuncMap(
-    const ::substrait::Plan& sPlan) {
+void SubstraitVeloxPlanConverter::constructFunctionMap(
+    const ::substrait::Plan& substraitPlan) {
   // Construct the function map based on the Substrait representation.
-  for (const auto& sExtension : sPlan.extensions()) {
+  for (const auto& sExtension : substraitPlan.extensions()) {
     if (!sExtension.has_extension_function()) {
       continue;
     }
@@ -680,28 +684,6 @@ void SubstraitVeloxPlanConverter::setPhase(
     default:
       VELOX_FAIL("Aggregate phase is not supported.");
   }
-}
-
-core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
-    const ::substrait::Plan& substraitPlan,
-    memory::MemoryPool* pool) {
-  VELOX_CHECK(
-      checkTypeExtension(substraitPlan),
-      "The type extension only have unknown type.")
-  // Construct the function map based on the Substrait representation.
-  constructFunctionMap(substraitPlan);
-
-  // In fact, only one RelRoot or Rel is expected here.
-  VELOX_CHECK_EQ(substraitPlan.relations_size(), 1);
-  const auto& rel = substraitPlan.relations(0);
-  if (rel.has_root()) {
-    return toVeloxPlan(rel.root(), pool);
-  }
-  if (rel.has_rel()) {
-    return toVeloxPlan(rel.rel(), pool);
-  }
-
-  VELOX_FAIL("RelRoot or Rel is expected in Plan.");
 }
 
 int32_t SubstraitVeloxPlanConverter::streamIsInput(
@@ -1338,20 +1320,6 @@ void SubstraitVeloxPlanConverter::constructSubfieldFilters(
       std::move(colFilters), inputName, filterInfo->nullAllowed_, filters);
 }
 
-void SubstraitVeloxPlanConverter::constructFunctionMap(
-    const ::substrait::Plan& substraitPlan) {
-  // Construct the function map based on the Substrait representation.
-  for (const auto& sExtension : substraitPlan.extensions()) {
-    if (!sExtension.has_extension_function()) {
-      continue;
-    }
-    const auto& sFmap = sExtension.extension_function();
-    auto id = sFmap.function_anchor();
-    auto name = sFmap.name();
-    functionMap_[id] = name;
-  }
-}
-
 bool SubstraitVeloxPlanConverter::checkTypeExtension(
     const ::substrait::Plan& substraitPlan) {
   for (const auto& sExtension : substraitPlan.extensions()) {
@@ -1365,61 +1333,6 @@ bool SubstraitVeloxPlanConverter::checkTypeExtension(
     }
   }
   return true;
-}
-
-const std::string& SubstraitVeloxPlanConverter::findFunction(
-    uint64_t id) const {
-  return substraitParser_->findFunctionSpec(functionMap_, id);
-}
-
-void SubstraitVeloxPlanConverter::extractJoinKeys(
-    const ::substrait::Expression& joinExpression,
-    std::vector<const ::substrait::Expression::FieldReference*>& leftExprs,
-    std::vector<const ::substrait::Expression::FieldReference*>& rightExprs) {
-  std::vector<const ::substrait::Expression*> expressions;
-  expressions.push_back(&joinExpression);
-  while (!expressions.empty()) {
-    auto visited = expressions.back();
-    expressions.pop_back();
-    if (visited->rex_type_case() ==
-        ::substrait::Expression::RexTypeCase::kScalarFunction) {
-      const auto& funcName =
-          subParser_->getSubFunctionName(subParser_->findVeloxFunction(
-              functionMap_, visited->scalar_function().function_reference()));
-      const auto& args = visited->scalar_function().args();
-      if (funcName == "and") {
-        expressions.push_back(&args[0]);
-        expressions.push_back(&args[1]);
-      } else if (funcName == "equal") {
-        VELOX_CHECK(std::all_of(
-            args.cbegin(), args.cend(), [](const ::substrait::Expression& arg) {
-              return arg.has_selection();
-            }));
-        leftExprs.push_back(&args[0].selection());
-        rightExprs.push_back(&args[1].selection());
-      }
-    } else {
-      VELOX_FAIL(
-          "Unable to parse from join expression: {}",
-          joinExpression.DebugString());
-    }
-    std::unique_ptr<FilterType> filter = std::make_unique<RangeType>(
-        lowerBound,
-        lowerUnbounded,
-        lowerExclusive,
-        upperBound,
-        upperUnbounded,
-        upperExclusive,
-        nullAllowed);
-    colFilters.emplace_back(std::move(filter));
-  }
-}
-// Set the SubfieldFilter.
-setSubfieldFilter<KIND, FilterType>(
-    std::move(colFilters),
-    inputName,
-    filterInfo->nullAllowed_,
-    filters);
 }
 
 connector::hive::SubfieldFilters SubstraitVeloxPlanConverter::mapToFilters(

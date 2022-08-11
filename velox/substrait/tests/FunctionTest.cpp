@@ -102,12 +102,12 @@ TEST_F(FunctionTest, getSubFunctionTypes) {
   ASSERT_EQ(types.size(), 0);
 }
 
-TEST_F(FunctionTest, constructFuncMap) {
+TEST_F(FunctionTest, constructFunctionMap) {
   std::string planPath =
       getDataFilePath("velox/substrait/tests", "data/q1_first_stage.json");
   ::substrait::Plan substraitPlan;
   JsonToProtoConverter::readFromFile(planPath, substraitPlan);
-  planConverter_->constructFuncMap(substraitPlan);
+  planConverter_->constructFunctionMap(substraitPlan);
 
   auto functionMap = planConverter_->getFunctionMap();
   ASSERT_EQ(functionMap.size(), 9);
