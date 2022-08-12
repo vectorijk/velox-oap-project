@@ -414,6 +414,7 @@ std::shared_ptr<const core::PlanNode> SubstraitVeloxPlanConverter::toVeloxPlan(
       splitInfo->lengths.emplace_back(file.length());
       switch (file.file_format_case()) {
         case SubstraitFileFormatCase::kOrc:
+        case SubstraitFileFormatCase::kDwrf:
           splitInfo->format = dwio::common::FileFormat::DWRF;
           break;
         case SubstraitFileFormatCase::kParquet:
