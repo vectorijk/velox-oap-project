@@ -132,9 +132,10 @@ SubstraitVeloxExprConverter::toVeloxExpr(
     const ::substrait::Expression::ScalarFunction& sFunc,
     const RowTypePtr& inputType) {
   std::vector<std::shared_ptr<const core::ITypedExpr>> params;
-  params.reserve(sFunc.args().size());
-  for (const auto& sArg : sFunc.args()) {
-    params.emplace_back(toVeloxExpr(sArg, inputType));
+  params.reserve(sFunc.arguments().size());
+  for (const auto& sArg : sFunc.arguments()) {
+    params.emplace_back(
+        toVeloxExpr(getExprFromFunctionArgument(sArg), inputType));
   }
   const auto& veloxFunction =
       subParser_->findVeloxFunction(functionMap_, sFunc.function_reference());

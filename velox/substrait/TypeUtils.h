@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "velox/substrait/SubstraitParser.h"
 #include "velox/type/Filter.h"
 #include "velox/type/Type.h"
 
@@ -21,6 +21,10 @@ namespace facebook::velox::substrait {
 
 /// Return the Velox type according to the typename.
 TypePtr toVeloxType(const std::string& typeName);
+
+// Get Expression from FunctionArgument
+const ::substrait::Expression& getExprFromFunctionArgument(
+    const ::substrait::FunctionArgument& arg);
 
 #ifndef RANGETRAITS_H
 #define RANGETRAITS_H
