@@ -1374,7 +1374,7 @@ void ExprSet::eval(
     clearSharedSubexprs();
   }
   for (const auto& field : multiplyReferencedFields_) {
-    context->ensureFieldLoaded(field->index(*context), rows);
+    context.ensureFieldLoaded(field->index(context), rows);
   }
   for (int32_t i = begin; i < end; ++i) {
     exprs_[i]->eval(rows, context, result[i]);

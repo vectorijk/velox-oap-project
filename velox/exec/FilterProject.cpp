@@ -158,7 +158,7 @@ RowVectorPtr FilterProject::getOutput() {
       numOut, allRowsSelected ? nullptr : filterEvalCtx_.selectedIndices);
 }
 
-void FilterProject::project(const SelectivityVector& rows, EvalCtx* evalCtx) {
+void FilterProject::project(const SelectivityVector& rows, EvalCtx& evalCtx) {
   exprs_->eval(
       hasFilter_ ? 1 : 0, numExprs_, !hasFilter_, rows, evalCtx, results_);
 }
