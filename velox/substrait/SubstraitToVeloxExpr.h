@@ -88,6 +88,11 @@ class SubstraitVeloxExprConverter {
       const ::substrait::Expression::IfThen& ifThenExpr,
       const RowTypePtr& inputType);
 
+  /// Wrap a constant vector from literals with an array vector inside to create
+  /// the constant expression.
+  std::shared_ptr<const core::ConstantTypedExpr> literalsToConstantExpr(
+      const std::vector<::substrait::Expression::Literal>& literals);
+
  private:
   /// Memory pool.
   memory::MemoryPool* pool_;

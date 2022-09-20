@@ -72,6 +72,16 @@ function install_fmt {
   cmake_install -DFMT_TEST=OFF
 }
 
+function install_protobuf {
+  wget https://github.com/protocolbuffers/protobuf/releases/download/v21.4/protobuf-all-21.4.tar.gz
+  tar -xzf protobuf-all-21.4.tar.gz
+  cd protobuf-21.4
+  ./configure --prefix=/usr
+  make "-j$(nproc)"
+  sudo make install
+  sudo ldconfig
+}
+
 function install_velox_deps {
   run_and_time install_fmt
 }
