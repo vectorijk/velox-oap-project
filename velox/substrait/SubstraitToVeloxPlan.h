@@ -48,6 +48,9 @@ class SubstraitVeloxPlanConverter {
   explicit SubstraitVeloxPlanConverter(memory::MemoryPool* pool)
       : pool_(pool) {}
 
+  /// Used to convert Substrait SortRel into Velox PlanNode.
+  core::PlanNodePtr toVeloxPlan(const ::substrait::SortRel& sSort);
+
   /// Used to convert Substrait JoinRel into Velox PlanNode.
   core::PlanNodePtr toVeloxPlan(const ::substrait::JoinRel& sJoin);
 
