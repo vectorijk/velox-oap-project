@@ -33,6 +33,8 @@ namespace vestrait = facebook::velox::substrait;
 class FunctionTest : public ::testing::Test {
  protected:
   std::shared_ptr<core::QueryCtx> queryCtx_ = core::QueryCtx::createForTest();
+  std::unique_ptr<memory::ScopedMemoryPool> pool_ =
+      memory::getDefaultScopedMemoryPool();
   std::shared_ptr<vestrait::SubstraitParser> substraitParser_ =
       std::make_shared<vestrait::SubstraitParser>();
 

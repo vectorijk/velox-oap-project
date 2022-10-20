@@ -45,8 +45,10 @@ struct SplitInfo {
 /// This class is used to convert the Substrait plan into Velox plan.
 class SubstraitVeloxPlanConverter {
  public:
-  explicit SubstraitVeloxPlanConverter(memory::MemoryPool* pool)
-      : pool_(pool) {}
+  explicit SubstraitVeloxPlanConverter(
+      memory::MemoryPool* pool,
+      bool validationMode = false)
+      : pool_(pool), validationMode_(validationMode) {}
 
   /// Used to convert Substrait SortRel into Velox PlanNode.
   core::PlanNodePtr toVeloxPlan(const ::substrait::SortRel& sSort);
@@ -63,25 +65,10 @@ class SubstraitVeloxPlanConverter {
   /// Convert Substrait FilterRel into Velox PlanNode.
   core::PlanNodePtr toVeloxPlan(const ::substrait::FilterRel& filterRel);
 
-  /// Convert Substrait ReadRel into Velox PlanNode.
-  /// Index: the index of the partition this item belongs to.
-  /// Starts: the start positions in byte to read from the items.
-  /// Lengths: the lengths in byte to read from the items.
-  core::PlanNodePtr toVeloxPlan(const ::substrait::ReadRel& sRead);
-
   /// Convert Substrait ReadRel into Velox Values Node.
   core::PlanNodePtr toVeloxPlan(
       const ::substrait::ReadRel& readRel,
       const RowTypePtr& type);
-
-  /// Convert Substrait Rel into Velox PlanNode.
-  core::PlanNodePtr toVeloxPlan(const ::substrait::Rel& rel);
-
-  /// Convert Substrait RelRoot into Velox PlanNode.
-  core::PlanNodePtr toVeloxPlan(const ::substrait::RelRoot& root);
-
-  /// Convert Substrait Plan into Velox PlanNode.
-  core::PlanNodePtr toVeloxPlan(const ::substrait::Plan& substraitPlan);
 
   /// Check the Substrait type extension only has one unknown extension.
   bool checkTypeExtension(const ::substrait::Plan& substraitPlan);
@@ -155,9 +142,6 @@ class SubstraitVeloxPlanConverter {
       std::vector<const ::substrait::Expression::FieldReference*>& rightExprs);
 
  private:
-  /// Memory pool.
-  memory::MemoryPool* pool_;
-
   /// Range filter recorder for a field is used to make sure only the conditions
   /// that can coexist for this field being pushed down with a range filter.
   class RangeRecorder {
@@ -324,9 +308,9 @@ class SubstraitVeloxPlanConverter {
       uint32_t& fieldIndex);
 
   /// Separate the functions to be two parts:
-  /// subfield functions to be handled by the subfieldFilters in
-  /// HiveConnector, and remaining functions to be handled by the
-  /// remainingFilter in HiveConnector.
+  /// subfield functions to be handled by the subfieldFilters in HiveConnector,
+  /// and remaining functions to be handled by the remainingFilter in
+  /// HiveConnector.
   void separateFilters(
       const std::unordered_map<uint32_t, std::shared_ptr<RangeRecorder>>&
           rangeRecorders,
