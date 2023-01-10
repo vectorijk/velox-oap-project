@@ -18,13 +18,13 @@
 #include "velox/functions/lib/IsNull.h"
 #include "velox/functions/lib/Re2Functions.h"
 #include "velox/functions/lib/RegistrationHelpers.h"
-#include "velox/functions/prestosql/DateTimeFunctions.h"
 #include "velox/functions/prestosql/JsonFunctions.h"
 #include "velox/functions/prestosql/Rand.h"
 #include "velox/functions/prestosql/StringFunctions.h"
 #include "velox/functions/sparksql/ArraySort.h"
 #include "velox/functions/sparksql/Bitwise.h"
 #include "velox/functions/sparksql/CompareFunctionsNullSafe.h"
+#include "velox/functions/sparksql/DateTimeFunctions.h"
 #include "velox/functions/sparksql/Hash.h"
 #include "velox/functions/sparksql/In.h"
 #include "velox/functions/sparksql/LeastGreatest.h"
@@ -33,7 +33,6 @@
 #include "velox/functions/sparksql/RegisterCompare.h"
 #include "velox/functions/sparksql/Size.h"
 #include "velox/functions/sparksql/String.h"
-
 namespace facebook::velox::functions {
 
 static void workAroundRegistrationMacro(const std::string& prefix) {
@@ -144,6 +143,10 @@ void registerFunctions(const std::string& prefix) {
       prefix + "array_sort", arraySortSignatures(), makeArraySort);
   exec::registerStatefulVectorFunction(
       prefix + "sort_array", sortArraySignatures(), makeSortArray);
+
+  registerFunction<YearFunction, int32_t, Timestamp>({"year"});
+  registerFunction<YearFunction, int32_t, Date>({"year"});
+  registerFunction<YearFunction, int32_t, TimestampWithTimezone>({"year"});
 }
 
 } // namespace sparksql
