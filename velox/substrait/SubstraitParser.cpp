@@ -118,20 +118,6 @@ std::shared_ptr<SubstraitParser::SubstraitType> SubstraitParser::parseType(
       nullability = substraitType.date().nullability();
       break;
     }
-    case ::substrait::Type::KindCase::kDecimal: {
-      auto precision = substraitType.decimal().precision();
-      auto scale = substraitType.decimal().scale();
-      if (precision <= 18) {
-        typeName = "SHORT_DECIMAL<" + std::to_string(precision) + "," +
-            std::to_string(scale) + ">";
-      } else {
-        typeName = "LONG_DECIMAL<" + std::to_string(precision) + "," +
-            std::to_string(scale) + ">";
-      }
-
-      nullability = substraitType.decimal().nullability();
-      break;
-    }
     default:
       VELOX_NYI(
           "Parsing for Substrait type not supported: {}",
@@ -311,31 +297,12 @@ std::string SubstraitParser::findVeloxFunction(
     uint64_t id) const {
   std::string funcSpec = findSubstraitFuncSpec(functionMap, id);
   std::string funcName = getSubFunctionName(funcSpec);
-
-  std::vector<std::string> types;
-  getSubFunctionTypes(funcSpec, types);
-  bool isDecimal = false;
-  for (auto& type : types) {
-    if (type.find("dec") != std::string::npos) {
-      isDecimal = true;
-      break;
-    }
-  }
-
-  return mapToVeloxFunction(funcName, isDecimal);
+  return mapToVeloxFunction(funcName);
 }
 
 std::string SubstraitParser::mapToVeloxFunction(
-    const std::string& subFunc,
-    bool isDecimal) const {
+    const std::string& subFunc) const {
   auto it = substraitVeloxFunctionMap_.find(subFunc);
-  if (isDecimal) {
-    if (subFunc == "add" || subFunc == "subtract" || subFunc == "multiply" ||
-        subFunc == "divide" || subFunc == "avg" || subFunc == "sum" ||
-        subFunc == "round") {
-      return "decimal_" + subFunc;
-    }
-  }
   if (it != substraitVeloxFunctionMap_.end()) {
     return it->second;
   }

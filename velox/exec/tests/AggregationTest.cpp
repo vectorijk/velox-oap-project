@@ -111,7 +111,7 @@ class AggregationTest : public OperatorTestBase {
   void SetUp() override {
     OperatorTestBase::SetUp();
     filesystems::registerLocalFileSystem();
-    registerSumNonPODAggregate("sumnonpod", 64);
+    registerSumNonPODAggregate("sumnonpod");
   }
 
   std::vector<RowVectorPtr>

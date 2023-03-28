@@ -47,6 +47,6 @@ struct NonPODInt64 {
   NonPODInt64& operator=(NonPODInt64&&) = delete;
 };
 
-bool registerSumNonPODAggregate(const std::string& name, int alignment);
+bool registerSumNonPODAggregate(const std::string& name);
 
 } // namespace facebook::velox::exec::test
