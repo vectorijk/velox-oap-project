@@ -207,10 +207,6 @@ class numeric_limits<facebook::velox::UnscaledShortDecimal> {
   static facebook::velox::UnscaledShortDecimal max() {
     return facebook::velox::UnscaledShortDecimal::max();
   }
-
-  static facebook::velox::UnscaledShortDecimal lowest() {
-    return facebook::velox::UnscaledShortDecimal::min();
-  }
 };
 } // namespace std
 

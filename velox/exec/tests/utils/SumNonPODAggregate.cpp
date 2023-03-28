@@ -31,12 +31,8 @@ namespace {
 // equality, we make sure Velox calls constructor/destructor properly.
 class SumNonPODAggregate : public Aggregate {
  public:
-  explicit SumNonPODAggregate(velox::TypePtr resultType, int alignment)
-      : Aggregate(resultType), alignment_(alignment) {}
-
-  int32_t accumulatorAlignmentSize() const override {
-    return alignment_;
-  }
+  explicit SumNonPODAggregate(velox::TypePtr resultType)
+      : Aggregate(resultType) {}
 
   int32_t accumulatorFixedWidthSize() const override {
     return sizeof(NonPODInt64);
@@ -50,9 +46,7 @@ class SumNonPODAggregate : public Aggregate {
       char** groups,
       folly::Range<const velox::vector_size_t*> indices) override {
     for (auto i : indices) {
-      char* group = value<char>(groups[i]);
-      VELOX_CHECK_EQ(reinterpret_cast<uintptr_t>(group) % alignment_, 0);
-      new (group) NonPODInt64(0);
+      new (groups[i] + offset_) NonPODInt64(0);
     }
   }
 
@@ -133,14 +127,10 @@ class SumNonPODAggregate : public Aggregate {
       bool mayPushdown) override {
     addSingleGroupIntermediateResults(group, rows, args, mayPushdown);
   }
-
- private:
-  const int32_t alignment_;
 };
-
 } // namespace
 
-bool registerSumNonPODAggregate(const std::string& name, int alignment) {
+bool registerSumNonPODAggregate(const std::string& name) {
   std::vector<std::shared_ptr<velox::exec::AggregateFunctionSignature>>
       signatures{
           velox::exec::AggregateFunctionSignatureBuilder()
@@ -153,12 +143,12 @@ bool registerSumNonPODAggregate(const std::string& name, int alignment) {
   velox::exec::registerAggregateFunction(
       name,
       std::move(signatures),
-      [alignment](
+      [name](
           velox::core::AggregationNode::Step /*step*/,
           const std::vector<velox::TypePtr>& /*argTypes*/,
           const velox::TypePtr& /*resultType*/)
           -> std::unique_ptr<velox::exec::Aggregate> {
-        return std::make_unique<SumNonPODAggregate>(velox::BIGINT(), alignment);
+        return std::make_unique<SumNonPODAggregate>(velox::BIGINT());
       });
   return true;
 }

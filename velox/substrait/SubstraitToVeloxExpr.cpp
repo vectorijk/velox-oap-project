@@ -370,16 +370,8 @@ SubstraitVeloxExprConverter::toVeloxExpr(
     case ::substrait::Expression_Literal::LiteralTypeCase::kNull: {
       auto veloxType =
           toVeloxType(subParser_->parseType(substraitLit.null())->type);
-      if (veloxType->isShortDecimal()) {
-        return std::make_shared<core::ConstantTypedExpr>(
-            veloxType, variant::shortDecimal(std::nullopt, veloxType));
-      } else if (veloxType->isLongDecimal()) {
-        return std::make_shared<core::ConstantTypedExpr>(
-            veloxType, variant::longDecimal(std::nullopt, veloxType));
-      } else {
-        return std::make_shared<core::ConstantTypedExpr>(
+      return std::make_shared<core::ConstantTypedExpr>(
           veloxType, variant::null(veloxType->kind()));
-      }
     }
     case ::substrait::Expression_Literal::LiteralTypeCase::kDate:
       return std::make_shared<core::ConstantTypedExpr>(
@@ -399,22 +391,6 @@ SubstraitVeloxExprConverter::toVeloxExpr(
       auto constantVector =
           BaseVector::wrapInConstant(1, 0, literalsToRowVector(substraitLit));
       return std::make_shared<const core::ConstantTypedExpr>(constantVector);
-    }
-    case ::substrait::Expression_Literal::LiteralTypeCase::kDecimal: {
-      auto decimal = substraitLit.decimal().value();
-      auto precision = substraitLit.decimal().precision();
-      auto scale = substraitLit.decimal().scale();
-      int128_t decimalValue;
-      memcpy(&decimalValue, decimal.c_str(), 16);
-      if (precision <= 18) {
-        auto type = SHORT_DECIMAL(precision, scale);
-        return std::make_shared<core::ConstantTypedExpr>(
-            type, variant::shortDecimal((int64_t)decimalValue, type));
-      } else {
-        auto type = LONG_DECIMAL(precision, scale);
-        return std::make_shared<core::ConstantTypedExpr>(
-            type, variant::longDecimal(decimalValue, type));
-      }
     }
     default:
       VELOX_NYI(

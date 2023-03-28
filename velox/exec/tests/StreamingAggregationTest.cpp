@@ -24,7 +24,7 @@ class StreamingAggregationTest : public OperatorTestBase {
  protected:
   void SetUp() override {
     OperatorTestBase::SetUp();
-    registerSumNonPODAggregate("sumnonpod", 64);
+    registerSumNonPODAggregate("sumnonpod");
   }
 
   CursorParameters makeCursorParameters(

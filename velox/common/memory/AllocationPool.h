@@ -35,9 +35,7 @@ class AllocationPool {
 
   void clear();
 
-  // Allocate a buffer from this pool, optionally aligned.  The alignment can
-  // only be power of 2.
-  char* allocateFixed(uint64_t bytes, int32_t alignment = 1);
+  char* allocateFixed(uint64_t bytes);
 
   // Starts a new run for variable length allocation. The actual size
   // is at least one machine page. Throws std::bad_alloc if no space.

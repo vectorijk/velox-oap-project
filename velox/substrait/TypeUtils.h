@@ -81,13 +81,6 @@ struct RangeTraits<TypeKind::DATE> {
   using NativeType = int32_t;
 };
 
-template <>
-struct RangeTraits<TypeKind::SHORT_DECIMAL> {
-  using RangeType = common::ShortDecimalRange;
-  using MultiRangeType = common::ShortDecimalMultiRange;
-  using NativeType = UnscaledShortDecimal;
-};
-
 #endif /* RANGETRAITS_H */
 
 } // namespace facebook::velox::substrait
