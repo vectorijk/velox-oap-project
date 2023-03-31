@@ -46,7 +46,8 @@ class DecimalUtil {
       const int fromScale,
       const int toPrecision,
       const int toScale,
-      bool nullOnOverflow = false) {
+      bool nullOnOverflow = false,
+      bool roundUp = true) {
     int128_t rescaledValue = inputValue.unscaledValue();
     auto scaleDifference = toScale - fromScale;
     bool isOverflow = false;
@@ -60,9 +61,10 @@ class DecimalUtil {
       const auto scalingFactor = DecimalUtil::kPowersOfTen[scaleDifference];
       rescaledValue /= scalingFactor;
       int128_t remainder = inputValue.unscaledValue() % scalingFactor;
-      if (inputValue.unscaledValue() >= 0 && remainder >= scalingFactor / 2) {
+      if (roundUp && inputValue.unscaledValue() >= 0 &&
+          remainder >= scalingFactor / 2) {
         ++rescaledValue;
-      } else if (remainder <= -scalingFactor / 2) {
+      } else if (roundUp && remainder <= -scalingFactor / 2) {
         --rescaledValue;
       }
     }
@@ -98,6 +100,7 @@ class DecimalUtil {
 
     // Multiply decimal with the scale
     auto unscaled = inputValue * DecimalUtil::kPowersOfTen[toScale];
+
     bool isOverflow = std::isnan(unscaled);
 
     unscaled = std::round(unscaled);
@@ -115,7 +118,7 @@ class DecimalUtil {
     if (rescaledValue < -DecimalUtil::kPowersOfTen[toPrecision] ||
         rescaledValue > DecimalUtil::kPowersOfTen[toPrecision] || isOverflow) {
       VELOX_USER_FAIL(
-          "Cannot cast BIGINT '{}' to DECIMAL({},{})",
+          "Cannot cast DOUBLE '{}' to DECIMAL({},{})",
           inputValue,
           toPrecision,
           toScale);
@@ -455,10 +458,10 @@ class DecimalUtil {
   }
 
   template <class T>
-  inline static int numDigits(T number)
-  {
+  inline static int numDigits(T number) {
     int digits = 0;
-    if (number < 0) digits = 1; // remove this line if '-' counts as a digit
+    if (number < 0)
+      digits = 1; // remove this line if '-' counts as a digit
     while (number) {
       number /= 10;
       digits++;

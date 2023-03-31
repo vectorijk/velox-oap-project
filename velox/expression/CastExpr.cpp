@@ -26,6 +26,7 @@
 #include "velox/expression/StringWriter.h"
 #include "velox/external/date/tz.h"
 #include "velox/functions/lib/RowsTranslationUtil.h"
+#include "velox/type/DecimalUtilOp.h"
 #include "velox/vector/ComplexVector.h"
 #include "velox/vector/FunctionVector.h"
 #include "velox/vector/SelectivityVector.h"
@@ -191,6 +192,30 @@ void applyDoubleToDecimalCastKernel(
   const auto& toPrecisionScale = getDecimalPrecisionScale(*toType);
   context.applyToSelectedNoThrow(rows, [&](vector_size_t row) {
     auto rescaledValue = DecimalUtil::rescaleDouble<TOutput>(
+        sourceVector->valueAt(row),
+        toPrecisionScale.first,
+        toPrecisionScale.second);
+    if (rescaledValue.has_value()) {
+      castResultRawBuffer[row] = rescaledValue.value();
+    } else {
+      castResult->setNull(row, true);
+    }
+  });
+}
+
+template <typename TOutput>
+void applyVarCharToDecimalCastKernel(
+    const SelectivityVector& rows,
+    const BaseVector& input,
+    exec::EvalCtx& context,
+    const TypePtr& toType,
+    VectorPtr castResult) {
+  auto sourceVector = input.as<SimpleVector<StringView>>();
+  auto castResultRawBuffer =
+      castResult->asUnchecked<FlatVector<TOutput>>()->mutableRawValues();
+  const auto& toPrecisionScale = getDecimalPrecisionScale(*toType);
+  context.applyToSelectedNoThrow(rows, [&](vector_size_t row) {
+    auto rescaledValue = DecimalUtilOp::rescaleVarchar<TOutput>(
         sourceVector->valueAt(row),
         toPrecisionScale.first,
         toPrecisionScale.second);
@@ -631,6 +656,16 @@ VectorPtr CastExpr::applyDecimal(
             rows, input, context, toType, castResult);
       } else {
         applyDoubleToDecimalCastKernel<double, UnscaledLongDecimal>(
+            rows, input, context, toType, castResult);
+      }
+      break;
+    }
+    case TypeKind::VARCHAR: {
+      if (toType->kind() == TypeKind::SHORT_DECIMAL) {
+        applyVarCharToDecimalCastKernel<UnscaledShortDecimal>(
+            rows, input, context, toType, castResult);
+      } else {
+        applyVarCharToDecimalCastKernel<UnscaledLongDecimal>(
             rows, input, context, toType, castResult);
       }
       break;
