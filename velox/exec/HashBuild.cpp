@@ -54,6 +54,11 @@ HashBuild::HashBuild(
       joinBridge_(operatorCtx_->task()->getHashJoinBridgeLocked(
           operatorCtx_->driverCtx()->splitGroupId,
           planNodeId())),
+      spillMemoryThreshold_(
+          operatorCtx_->driverCtx()
+              ->queryConfig()
+              .joinSpillMemoryThreshold()), // fixme should we use
+                                            // "hashBuildSpillMemoryThreshold"
       spillConfig_(
           joinNode_->canSpill(driverCtx->queryConfig())
               ? operatorCtx_->makeSpillConfig(Spiller::Type::kHashJoinBuild)
@@ -409,6 +414,18 @@ bool HashBuild::reserveMemory(const RowVectorPtr& input) {
     return false;
   }
 
+  auto tracker = pool()->getMemoryUsageTracker();
+  VELOX_CHECK_NOT_NULL(tracker);
+  const auto currentUsage = tracker->currentBytes();
+  if (spillMemoryThreshold_ != 0 && currentUsage > spillMemoryThreshold_) {
+    const int64_t bytesToSpill =
+        currentUsage * spillConfig()->spillableReservationGrowthPct / 100;
+    numSpillRows_ = std::max<int64_t>(
+        1, bytesToSpill / (rows->fixedRowSize() + outOfLineBytesPerRow));
+    numSpillBytes_ = numSpillRows_ * outOfLineBytesPerRow;
+    return false;
+  }
+
   if (freeRows > input->size() &&
       (outOfLineBytes == 0 || outOfLineFreeBytes >= flatBytes)) {
     // Enough free rows for input rows and enough variable length free
@@ -422,7 +439,6 @@ bool HashBuild::reserveMemory(const RowVectorPtr& input) {
   const auto increment =
       rows->sizeIncrement(input->size(), outOfLineBytes ? flatBytes : 0);
 
-  auto tracker = pool()->getMemoryUsageTracker();
   // There must be at least 2x the increments in reservation.
   if (tracker->availableReservation() > 2 * increment) {
     return true;
