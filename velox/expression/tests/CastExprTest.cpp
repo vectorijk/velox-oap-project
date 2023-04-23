@@ -77,6 +77,7 @@ class CastExprTest : public functions::test::CastBaseTest {
       bool nullOnFailure = false) {
     auto rowVector = makeRowVector({data});
     auto rowType = asRowType(rowVector->type());
+
     auto castExpr = makeCastExpr(
         makeTypedExpr(fromExpression, rowType),
         expected->type(),
@@ -656,7 +657,8 @@ TEST_F(CastExprTest, toString) {
 TEST_F(CastExprTest, decimalToInt) {
   // short to short, scale up.
   auto longFlat = makeLongDecimalFlatVector({8976067200}, DECIMAL(21, 6));
-  testComplexCast("c0", longFlat, makeFlatVector<int32_t>({8976}));
+  testComplexCast(
+      "c0", longFlat, makeFlatVector<int32_t>(std::vector<int32_t>{8976}));
 }
 
 TEST_F(CastExprTest, decimalToDecimal) {
@@ -833,25 +835,13 @@ TEST_F(CastExprTest, bigintToDecimal) {
 }
 
 TEST_F(CastExprTest, varcharToDecimal) {
-  // varchar to short decimal
-  //   auto input = makeFlatVector<StringView>({"-3", "177"});
-  //   testComplexCast(
-  //       "c0", input, makeShortDecimalFlatVector({-300, 17700}, DECIMAL(6,
-  //       2)));
-
-  //   // varchar to long decimal
-  //   auto input2 = makeFlatVector<StringView>(
-  //       {"-300000001234567891234.5", "1771234.5678912345678"});
-  //   testComplexCast(
-  //       "c0", input2, makeLongDecimalFlatVector({-300, 17700}, DECIMAL(32,
-  //       7)));
-
-  auto input3 = makeFlatVector<StringView>({"9999999999.99", "9999999999.99"});
+  auto input = makeFlatVector<StringView>(
+      std::vector<StringView>{"9999999999.99", "9999999999.99"});
   testComplexCast(
       "c0",
-      input3,
-      makeLongDecimalFlatVector(
-          {-30'000'000'000, -20'000'000'000}, DECIMAL(12, 2)));
+      input,
+      makeShortDecimalFlatVector(
+          {999'999'999'999, 999'999'999'999}, DECIMAL(12, 2)));
 }
 
 TEST_F(CastExprTest, castInTry) {
