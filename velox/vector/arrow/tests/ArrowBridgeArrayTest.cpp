@@ -751,8 +751,7 @@ TEST_F(ArrowBridgeArrayExportTest, unsupported) {
 
   // Timestamps.
   vector = vectorMaker_.flatVectorNullable<Timestamp>({});
-  EXPECT_THROW(
-      velox::exportToArrow(vector, arrowArray, pool_.get()), VeloxException);
+  velox::exportToArrow(vector, arrowArray, pool_.get());
 
   // Constant encoding.
   vector = BaseVector::createConstant(INTEGER(), variant(10), 10, pool_.get());
