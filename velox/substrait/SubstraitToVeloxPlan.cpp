@@ -110,6 +110,122 @@ core::PlanNodePtr SubstraitVeloxPlanConverter::processEmit(
 }
 
 core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
+    const ::substrait::JoinRel& sJoin) {
+  if (!sJoin.has_left()) {
+    VELOX_FAIL("Left Rel is expected in JoinRel.");
+  }
+  if (!sJoin.has_right()) {
+    VELOX_FAIL("Right Rel is expected in JoinRel.");
+  }
+
+  auto leftNode = toVeloxPlan(sJoin.left());
+  auto rightNode = toVeloxPlan(sJoin.right());
+
+  // Map join type.
+  core::JoinType joinType;
+  bool isNullAwareAntiJoin = false;
+  switch (sJoin.type()) {
+    case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_INNER:
+      joinType = core::JoinType::kInner;
+      break;
+    case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_OUTER:
+      joinType = core::JoinType::kFull;
+      break;
+    case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_LEFT:
+      joinType = core::JoinType::kLeft;
+      break;
+    case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_RIGHT:
+      joinType = core::JoinType::kRight;
+      break;
+    case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_LEFT_SEMI:
+      // Determine the semi join type based on extracted information.
+      if (sJoin.has_advanced_extension() &&
+          subParser_->configSetInOptimization(
+              sJoin.advanced_extension(), "isExistenceJoin=")) {
+        joinType = core::JoinType::kLeftSemiProject;
+      } else {
+        joinType = core::JoinType::kLeftSemiFilter;
+      }
+      break;
+    case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_RIGHT_SEMI:
+      // Determine the semi join type based on extracted information.
+      if (sJoin.has_advanced_extension() &&
+          subParser_->configSetInOptimization(
+              sJoin.advanced_extension(), "isExistenceJoin=")) {
+        joinType = core::JoinType::kRightSemiProject;
+      } else {
+        joinType = core::JoinType::kRightSemiFilter;
+      }
+      break;
+    case ::substrait::JoinRel_JoinType::JoinRel_JoinType_JOIN_TYPE_ANTI: {
+      // Determine the anti join type based on extracted information.
+      if (sJoin.has_advanced_extension() &&
+          subParser_->configSetInOptimization(
+              sJoin.advanced_extension(), "isNullAwareAntiJoin=")) {
+        isNullAwareAntiJoin = true;
+      }
+      joinType = core::JoinType::kAnti;
+      break;
+    }
+    default:
+      VELOX_NYI("Unsupported Join type: {}", sJoin.type());
+  }
+
+  // extract join keys from join expression
+  std::vector<const ::substrait::Expression::FieldReference*> leftExprs,
+      rightExprs;
+  extractJoinKeys(sJoin.expression(), leftExprs, rightExprs);
+  VELOX_CHECK_EQ(leftExprs.size(), rightExprs.size());
+  size_t numKeys = leftExprs.size();
+
+  std::vector<std::shared_ptr<const core::FieldAccessTypedExpr>> leftKeys,
+      rightKeys;
+  leftKeys.reserve(numKeys);
+  rightKeys.reserve(numKeys);
+  auto inputRowType = getJoinInputType(leftNode, rightNode);
+  for (size_t i = 0; i < numKeys; ++i) {
+    leftKeys.emplace_back(
+        exprConverter_->toVeloxExpr(*leftExprs[i], inputRowType));
+    rightKeys.emplace_back(
+        exprConverter_->toVeloxExpr(*rightExprs[i], inputRowType));
+  }
+
+  std::shared_ptr<const core::ITypedExpr> filter;
+  if (sJoin.has_post_join_filter()) {
+    filter =
+        exprConverter_->toVeloxExpr(sJoin.post_join_filter(), inputRowType);
+  }
+
+  if (sJoin.has_advanced_extension() &&
+      subParser_->configSetInOptimization(
+          sJoin.advanced_extension(), "isSMJ=")) {
+    // Create MergeJoinNode node
+    return std::make_shared<core::MergeJoinNode>(
+        nextPlanNodeId(),
+        joinType,
+        leftKeys,
+        rightKeys,
+        filter,
+        leftNode,
+        rightNode,
+        getJoinOutputType(leftNode, rightNode, joinType));
+
+  } else {
+    // Create HashJoinNode node
+    return std::make_shared<core::HashJoinNode>(
+        nextPlanNodeId(),
+        joinType,
+        isNullAwareAntiJoin,
+        leftKeys,
+        rightKeys,
+        filter,
+        leftNode,
+        rightNode,
+        getJoinOutputType(leftNode, rightNode, joinType));
+  }
+}
+
+core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
     const ::substrait::AggregateRel& aggRel) {
   auto childNode = convertSingleInput<::substrait::AggregateRel>(aggRel);
   core::AggregationNode::Step aggStep = toAggregationStep(aggRel);
@@ -528,6 +644,9 @@ core::PlanNodePtr SubstraitVeloxPlanConverter::toVeloxPlan(
   if (rel.has_filter()) {
     return toVeloxPlan(rel.filter());
   }
+  if (rel.has_join()) {
+    return toVeloxPlan(rel.join());
+  }
   if (rel.has_read()) {
     auto splitInfo = std::make_shared<SplitInfo>();
 
@@ -787,6 +906,44 @@ bool SubstraitVeloxPlanConverter::checkTypeExtension(
 const std::string& SubstraitVeloxPlanConverter::findFunction(
     uint64_t id) const {
   return substraitParser_->findFunctionSpec(functionMap_, id);
+}
+
+void SubstraitVeloxPlanConverter::extractJoinKeys(
+    const ::substrait::Expression& joinExpression,
+    std::vector<const ::substrait::Expression::FieldReference*>& leftExprs,
+    std::vector<const ::substrait::Expression::FieldReference*>& rightExprs) {
+  std::vector<const ::substrait::Expression*> expressions;
+  expressions.push_back(&joinExpression);
+  while (!expressions.empty()) {
+    auto visited = expressions.back();
+    expressions.pop_back();
+    if (visited->rex_type_case() ==
+        ::substrait::Expression::RexTypeCase::kScalarFunction) {
+      const auto& funcName =
+          subParser_->getSubFunctionName(subParser_->findVeloxFunction(
+              functionMap_, visited->scalar_function().function_reference()));
+      const auto& args = visited->scalar_function().arguments();
+      if (funcName == "and") {
+        expressions.push_back(&args[0].value());
+        expressions.push_back(&args[1].value());
+      } else if (funcName == "eq" || funcName == "equalto") {
+        VELOX_CHECK(std::all_of(
+            args.cbegin(),
+            args.cend(),
+            [](const ::substrait::FunctionArgument& arg) {
+              return arg.value().has_selection();
+            }));
+        leftExprs.push_back(&args[0].value().selection());
+        rightExprs.push_back(&args[1].value().selection());
+      } else {
+        VELOX_NYI("Join condition {} not supported.", funcName);
+      }
+    } else {
+      VELOX_FAIL(
+          "Unable to parse from join expression: {}",
+          joinExpression.DebugString());
+    }
+  }
 }
 
 } // namespace facebook::velox::substrait

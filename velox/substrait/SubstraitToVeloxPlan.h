@@ -53,6 +53,10 @@ class SubstraitVeloxPlanConverter {
   /// Convert Substrait FilterRel into Velox PlanNode.
   core::PlanNodePtr toVeloxPlan(const ::substrait::FilterRel& filterRel);
 
+  /// Convert Substrait JoinRel into Velox PlanNode.
+  std::shared_ptr<const core::PlanNode> toVeloxPlan(
+      const ::substrait::JoinRel& sJoin);
+
   /// Convert Substrait ReadRel into Velox PlanNode.
   /// Index: the index of the partition this item belongs to.
   /// Starts: the start positions in byte to read from the items.
@@ -88,6 +92,16 @@ class SubstraitVeloxPlanConverter {
   /// Construct the function map between the index and the Substrait function
   /// name.
   void constructFunctionMap(const ::substrait::Plan& substraitPlan);
+
+  /// Extract join keys from joinExpression.
+  /// joinExpression is a boolean condition that describes whether each record
+  /// from the left set "match" the record from the right set. The condition
+  /// must only include the following operations: AND, ==, field references.
+  /// Field references correspond to the direct output order of the data.
+  void extractJoinKeys(
+      const ::substrait::Expression& joinExpression,
+      std::vector<const ::substrait::Expression::FieldReference*>& leftExprs,
+      std::vector<const ::substrait::Expression::FieldReference*>& rightExprs);
 
   /// Return the function map used by this plan converter.
   const std::unordered_map<uint64_t, std::string>& getFunctionMap() const {
