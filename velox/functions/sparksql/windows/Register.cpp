@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "velox/functions/sparksql/window/WindowFunctionsRegistration.h"
-#include "velox/functions/lib/window/NthValue.h"
 
-namespace facebook::velox::functions::window::sparksql {
+#include "velox/functions/sparksql/windows/Register.h"
+#include "velox/functions/sparksql/windows/RowNumber.h"
+
+namespace facebook::velox::functions::sparksql::windows {
 
 void registerWindowFunctions(const std::string& prefix) {
-  functions::window::registerIntegerNthValue(prefix + "nth_value");
+  windows::registerRowNumber(prefix + "row_number");
 }
-
-} // namespace facebook::velox::functions::window::sparksql
+} // namespace facebook::velox::functions::sparksql::windows
