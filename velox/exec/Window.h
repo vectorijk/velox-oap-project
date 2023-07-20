@@ -59,7 +59,7 @@ class Window : public Operator {
     return finished_;
   }
 
- protected:
+ private:
   // Used for k preceding/following frames. Index is the column index if k is a
   // column. value is used to read column values from the column index when k
   // is a column. The field constant stores constant k values.
@@ -91,7 +91,7 @@ class Window : public Operator {
 
   // Helper function to create the buffers for peer and frame
   // row indices to send in window function apply invocations.
-  virtual void createPeerAndFrameBuffers();
+  void createPeerAndFrameBuffers();
 
   // Function to compute the partitionStartRows_ structure.
   // partitionStartRows_ is vector of the starting rows index
@@ -321,9 +321,6 @@ class Window : public Operator {
 
   // Tracks how far along the partition rows have been output.
   vector_size_t partitionOffset_ = 0;
-
-  // Number of partitions.
-  vector_size_t numPartitions_ = 0;
 };
 
 } // namespace facebook::velox::exec

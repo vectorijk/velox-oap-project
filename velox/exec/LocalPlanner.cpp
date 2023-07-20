@@ -36,15 +36,13 @@
 #include "velox/exec/PartitionedOutput.h"
 #include "velox/exec/RowNumber.h"
 #include "velox/exec/StreamingAggregation.h"
-#include "velox/exec/StreamingWindow.h"
 #include "velox/exec/TableScan.h"
 #include "velox/exec/TableWriter.h"
 #include "velox/exec/TopN.h"
 #include "velox/exec/TopNRowNumber.h"
 #include "velox/exec/Unnest.h"
 #include "velox/exec/Values.h"
-
-DEFINE_bool(EnableStreamingWindow, false, "enable streaming window");
+#include "velox/exec/Window.h"
 
 namespace facebook::velox::exec {
 
@@ -486,14 +484,7 @@ std::shared_ptr<Driver> DriverFactory::createDriver(
     } else if (
         auto windowNode =
             std::dynamic_pointer_cast<const core::WindowNode>(planNode)) {
-      if (FLAGS_EnableStreamingWindow) {
-        operators.push_back(
-            std::make_unique<StreamingWindow>(id, ctx.get(), windowNode));
-      } else {
-        operators.push_back(
-            std::make_unique<Window>(id, ctx.get(), windowNode));
-      }
-
+      operators.push_back(std::make_unique<Window>(id, ctx.get(), windowNode));
     } else if (
         auto rowNumberNode =
             std::dynamic_pointer_cast<const core::RowNumberNode>(planNode)) {
