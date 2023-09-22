@@ -637,8 +637,7 @@ ParquetRowReader::ParquetRowReader(
     return; // TODO
   }
   ParquetParams params(pool_, columnReaderStats_, readerBase_->fileMetaData());
-  auto columnSelector = std::make_shared<ColumnSelector>(
-      ColumnSelector::apply(options_.getSelector(), readerBase_->schema()));
+  auto columnSelector = options_.getSelector();
   columnReader_ = ParquetColumnReader::build(
       columnSelector->getSchemaWithId(),
       readerBase_->schemaWithId(), // Id is schema id
