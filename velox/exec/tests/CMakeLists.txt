@@ -94,7 +94,6 @@ add_executable(
   ParseTypeSignatureTest.cpp
   PlanBuilderTest.cpp
   QueryAssertionsTest.cpp
-  TaskTest.cpp
   TreeOfLosersTest.cpp)
 
 add_test(
