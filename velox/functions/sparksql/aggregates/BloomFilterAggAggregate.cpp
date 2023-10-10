@@ -92,9 +92,9 @@ class BloomFilterAggAggregate : public exec::Aggregate {
       bool /*mayPushdown*/) override {
     decodeArguments(rows, args);
     computeCapacity();
-    VELOX_USER_CHECK(
-        !decodedRaw_.mayHaveNulls(),
-        "First argument of bloom_filter_agg cannot be null");
+    // VELOX_USER_CHECK(
+    //     !decodedRaw_.mayHaveNulls(),
+    //     "First argument of bloom_filter_agg cannot be null");
     rows.applyToSelected([&](vector_size_t row) {
       auto group = groups[row];
       auto tracker = trackRowSize(group);
@@ -133,9 +133,9 @@ class BloomFilterAggAggregate : public exec::Aggregate {
     auto tracker = trackRowSize(group);
     auto accumulator = value<BloomFilterAccumulator>(group);
     accumulator->init(capacity_);
-    VELOX_USER_CHECK(
-        !decodedRaw_.mayHaveNulls(),
-        "First argument of bloom_filter_agg cannot be null");
+    // VELOX_USER_CHECK(
+    //     !decodedRaw_.mayHaveNulls(),
+    //     "First argument of bloom_filter_agg cannot be null");
     if (decodedRaw_.isConstantMapping()) {
       // All values are same, just do for the first.
       accumulator->insert(decodedRaw_.valueAt<int64_t>(0));
