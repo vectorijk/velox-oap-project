@@ -586,7 +586,7 @@ uint64_t Operator::MemoryReclaimer::reclaim(
       "facebook::velox::exec::Operator::MemoryReclaimer::reclaim", pool);
 
   op_->reclaim(targetBytes, stats);
-  return pool->shrink(targetBytes);
+  return pool->shrinkManaged(pool, targetBytes);
 }
 
 void Operator::MemoryReclaimer::abort(
