@@ -3250,10 +3250,13 @@ DEBUG_ONLY_TEST_F(SharedArbitrationTest, raceBetweenRaclaimAndJoinFinish) {
   const uint64_t oldCapacity = joinQueryCtx->pool()->capacity();
   task.load()->pool()->reclaim(1'000, stats);
   ASSERT_EQ(stats.numNonReclaimableAttempts, 1);
-  // Make sure we don't leak memory capacity since we reclaim from task pool
-  // directly.
-  static_cast<MemoryPoolImpl*>(task.load()->pool())
-      ->testingSetCapacity(oldCapacity);
+  //  Comment the following out: We already support decreasing capacity on
+  //  reclaiming via ::shrinkManaged so no need to call ::testingSetCapacity
+  //
+  //  // Make sure we don't leak memory capacity since we reclaim from task pool
+  //  // directly.
+  //  static_cast<MemoryPoolImpl*>(task.load()->pool())
+  //      ->testingSetCapacity(oldCapacity);
   waitForReclaimFlag = false;
   waitForReclaimEvent.notifyAll();
 
