@@ -13,8 +13,12 @@
 # limitations under the License.
 add_library(
   velox_functions_spark_aggregates
-  BitwiseXorAggregate.cpp BloomFilterAggAggregate.cpp FirstLastAggregate.cpp
-  Register.cpp)
+  ArrayAggAggregate.cpp
+  BitwiseXorAggregate.cpp
+  BloomFilterAggAggregate.cpp
+  FirstLastAggregate.cpp
+  Register.cpp
+  SetAggAggregate.cpp)
 
 target_link_libraries(velox_functions_spark_aggregates fmt::fmt velox_exec
                       velox_expression_functions velox_aggregates velox_vector)
