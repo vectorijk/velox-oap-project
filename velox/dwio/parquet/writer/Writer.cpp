@@ -229,6 +229,8 @@ Writer::Writer(
   } else {
     flushPolicy_ = std::make_unique<DefaultFlushPolicy>();
   }
+  options_.timestampUnit =
+      static_cast<TimestampUnit>(options.arrowBridgeTimestampUnit);
   arrowContext_->properties =
       getArrowParquetWriterOptions(options, flushPolicy_);
   setMemoryReclaimers();
@@ -380,6 +382,10 @@ parquet::WriterOptions getParquetOptions(
   parquetOptions.memoryPool = options.memoryPool;
   if (options.compressionKind.has_value()) {
     parquetOptions.compression = options.compressionKind.value();
+  }
+  if (options.arrowBridgeTimestampUnit.has_value()) {
+    parquetOptions.arrowBridgeTimestampUnit =
+        options.arrowBridgeTimestampUnit.value();
   }
   return parquetOptions;
 }
