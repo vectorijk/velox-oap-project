@@ -725,6 +725,7 @@ bool GroupingSet::getOutput(
   }
 
   if (hasSpilled()) {
+    spill();
     return getOutputWithSpill(maxOutputRows, maxOutputBytes, result);
   }
   VELOX_CHECK(!isDistinct());
@@ -929,6 +930,9 @@ void GroupingSet::ensureOutputFits() {
       return;
     }
   }
+  if (hasSpilled()) {
+    return;
+  }
   spill(RowContainerIterator{});
 }
 
@@ -955,11 +959,6 @@ void GroupingSet::spill() {
   if (table_ == nullptr || table_->numDistinct() == 0) {
     return;
   }
-
-  if (hasSpilled() && spiller_->finalized()) {
-    return;
-  }
-
   if (!hasSpilled()) {
     auto rows = table_->rows();
     VELOX_DCHECK(pool_.trackUsage());
@@ -1049,7 +1048,16 @@ bool GroupingSet::getOutputWithSpill(
   if (merge_ == nullptr) {
     return false;
   }
-  return mergeNext(maxOutputRows, maxOutputBytes, result);
+  bool hasData = mergeNext(maxOutputRows, maxOutputBytes, result);
+  if (!hasData) {
+    // If spill has been finalized, reset merge stream and spiller. This would
+    // help partial aggregation replay the spilling procedure once needed again.
+    merge_ = nullptr;
+    mergeRows_ = nullptr;
+    mergeArgs_.clear();
+    spiller_ = nullptr;
+  }
+  return hasData;
 }
 
 bool GroupingSet::mergeNext(
