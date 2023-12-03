@@ -942,7 +942,7 @@ TEST_F(ArrowBridgeArrayExportTest, constantComplex) {
 TEST_F(ArrowBridgeArrayExportTest, constantCrossValidate) {
   auto vector =
       BaseVector::createConstant(VARCHAR(), "hello", 100, pool_.get());
-  auto array = toArrow(vector, pool_.get());
+  auto array = toArrow(vector, options_, pool_.get());
 
   ASSERT_OK(array->ValidateFull());
   EXPECT_EQ(array->null_count(), 0);
