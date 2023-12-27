@@ -111,6 +111,10 @@ class HiveConfig {
       "file_column_names_read_as_lower_case";
 
   /// The max coalesce bytes for a request.
+  static constexpr const char* kPartitionPathAsLowerCaseSession =
+      "partition_path_as_lower_case";
+
+  /// Sets the max coalesce bytes for a request.
   static constexpr const char* kMaxCoalescedBytes = "max-coalesced-bytes";
 
   /// The max coalesce distance bytes for combining requests.
@@ -216,6 +220,8 @@ class HiveConfig {
   bool isOrcUseColumnNames(const Config* session) const;
 
   bool isFileColumnNamesReadAsLowerCase(const Config* session) const;
+
+  bool isPartitionPathAsLowerCaseSession(const Config* session) const;
 
   int64_t maxCoalescedBytes() const;
 
