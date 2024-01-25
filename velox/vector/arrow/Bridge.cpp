@@ -260,8 +260,7 @@ const char* exportArrowFormatStr(
         case TimestampUnit::kNano:
           return "tsn:";
         default:
-          VELOX_USER_FAIL(fmt::format(
-              "Unsupported timestamp unit: {}.", options.timestampUnit));
+          VELOX_UNREACHABLE();
       }
     // Complex/nested types.
     case TypeKind::ARRAY:
@@ -378,8 +377,7 @@ void gatherFromBuffer(
         rows.apply([&](vector_size_t i) { dstTs[j++] = srcTs[i].toNanos(); });
         break;
       default:
-        VELOX_USER_FAIL(fmt::format(
-            "Unsupported timestamp unit: {}.", options.timestampUnit));
+        VELOX_UNREACHABLE();
     }
   } else {
     auto typeSize = type.cppSizeInBytes();
@@ -1420,8 +1418,7 @@ VectorPtr createTimestampVector(
         }
         break;
       default:
-        VELOX_USER_FAIL(fmt::format(
-            "Unsupported timestamp unit: {}.", options.timestampUnit));
+        VELOX_UNREACHABLE();
     }
   }
   return std::make_shared<FlatVector<Timestamp>>(
