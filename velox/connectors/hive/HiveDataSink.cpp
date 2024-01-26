@@ -678,6 +678,8 @@ uint32_t HiveDataSink::appendWriter(const HiveWriterId& id) {
   options.serdeParameters = std::map<std::string, std::string>(
       insertTableHandle_->serdeParameters().begin(),
       insertTableHandle_->serdeParameters().end());
+  options.arrowBridgeTimestampUnit =
+      hiveConfig_->arrowBridgeTimestampUnit(connectorSessionProperties);
   ioStats_.emplace_back(std::make_shared<io::IoStatistics>());
 
   // Prevents the memory allocation during the writer creation.
