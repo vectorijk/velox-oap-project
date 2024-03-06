@@ -164,6 +164,9 @@ function install_lzo {
 }
 
 function install_boost {
+  # Remove old version.
+  sudo rm -f /usr/local/lib/libboost_* /usr/lib64/libboost_* /opt/rh/devtoolset-9/root/usr/lib64/dyninst/libboost_*
+  sudo rm -r /tmp/velox-deps/boost/ /usr/local/include/boost/ /usr/local/lib/cmake/Boost-1.72.0/
   cd "${DEPENDENCY_DIR}"
   wget_and_untar https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.gz boost
   cd boost
