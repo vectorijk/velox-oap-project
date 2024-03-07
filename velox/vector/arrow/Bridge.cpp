@@ -254,13 +254,13 @@ const char* exportArrowFormatStr(
     case TypeKind::TIMESTAMP:
       switch (options.timestampUnit) {
         case TimestampUnit::kSecond:
-          return "tss";
+          return "tss:";
         case TimestampUnit::kMilli:
-          return "tsm";
+          return "tsm:";
         case TimestampUnit::kMicro:
-          return "tsu";
+          return "tsu:";
         case TimestampUnit::kNano:
-          return "tsn";
+          return "tsn:";
         default:
           VELOX_UNREACHABLE();
       }

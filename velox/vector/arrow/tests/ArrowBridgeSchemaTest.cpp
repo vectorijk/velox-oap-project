@@ -193,13 +193,13 @@ TEST_F(ArrowBridgeSchemaExportTest, scalar) {
   testScalarType(VARBINARY(), "z");
 
   options_.timestampUnit = TimestampUnit::kSecond;
-  testScalarType(TIMESTAMP(), "tss");
+  testScalarType(TIMESTAMP(), "tss:");
   options_.timestampUnit = TimestampUnit::kMilli;
-  testScalarType(TIMESTAMP(), "tsm");
+  testScalarType(TIMESTAMP(), "tsm:");
   options_.timestampUnit = TimestampUnit::kMicro;
-  testScalarType(TIMESTAMP(), "tsu");
+  testScalarType(TIMESTAMP(), "tsu:");
   options_.timestampUnit = TimestampUnit::kNano;
-  testScalarType(TIMESTAMP(), "tsn");
+  testScalarType(TIMESTAMP(), "tsn:");
 
   testScalarType(DATE(), "tdD");
 
@@ -370,7 +370,7 @@ TEST_F(ArrowBridgeSchemaImportTest, scalar) {
   EXPECT_EQ(*VARBINARY(), *testSchemaImport("Z"));
 
   // Temporal.
-  EXPECT_EQ(*TIMESTAMP(), *testSchemaImport("tsu"));
+  EXPECT_EQ(*TIMESTAMP(), *testSchemaImport("tsu:"));
   EXPECT_EQ(*DATE(), *testSchemaImport("tdD"));
 
   EXPECT_EQ(*DECIMAL(10, 4), *testSchemaImport("d:10,4"));
@@ -383,7 +383,7 @@ TEST_F(ArrowBridgeSchemaImportTest, scalar) {
 TEST_F(ArrowBridgeSchemaImportTest, complexTypes) {
   // Array.
   EXPECT_EQ(*ARRAY(BIGINT()), *testSchemaImportComplex("+l", {"l"}));
-  EXPECT_EQ(*ARRAY(TIMESTAMP()), *testSchemaImportComplex("+l", {"tsn"}));
+  EXPECT_EQ(*ARRAY(TIMESTAMP()), *testSchemaImportComplex("+l", {"tsn:"}));
   EXPECT_EQ(*ARRAY(DATE()), *testSchemaImportComplex("+l", {"tdD"}));
   EXPECT_EQ(*ARRAY(VARCHAR()), *testSchemaImportComplex("+l", {"U"}));
 
@@ -529,7 +529,7 @@ TEST_F(ArrowBridgeSchemaImportTest, dictionaryTypeTest) {
       *testSchemaDictionaryImport(
           "i",
           makeComplexArrowSchema(
-              schemas, schemaPtrs, mapSchemas, mapSchemaPtrs, "+l", {"tsn"})));
+              schemas, schemaPtrs, mapSchemas, mapSchemaPtrs, "+l", {"tsn:"})));
   EXPECT_EQ(
       *ARRAY(DATE()),
       *testSchemaDictionaryImport(

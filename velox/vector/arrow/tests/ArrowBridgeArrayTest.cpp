@@ -1172,7 +1172,7 @@ class ArrowBridgeArrayImportTest : public ArrowBridgeArrayExportTest {
     testArrowImport<double>("g", {-99.9, 4.3, 31.1, 129.11, -12});
     testArrowImport<float>("f", {-99.9, 4.3, 31.1, 129.11, -12});
 
-    for (const std::string& tsString : {"tss", "tsm", "tsu", "tsn"}) {
+    for (const std::string& tsString : {"tss:", "tsm:", "tsu:", "tsn:"}) {
       testArrowImport<Timestamp, int64_t>(
           tsString.data(), {0, std::nullopt, 1699308257000001234});
     }
@@ -1672,7 +1672,7 @@ TEST_F(ArrowBridgeArrayImportAsViewerTest, scalar) {
 TEST_F(ArrowBridgeArrayImportAsViewerTest, without_nulls_buffer) {
   std::vector<std::optional<int64_t>> inputValues = {1, 2, 3, 4, 5};
   testImportWithoutNullsBuffer<int64_t>(inputValues, "l");
-  testImportWithoutNullsBuffer<Timestamp>(inputValues, "tsn");
+  testImportWithoutNullsBuffer<Timestamp>(inputValues, "tsn:");
 }
 
 TEST_F(ArrowBridgeArrayImportAsViewerTest, string) {
@@ -1725,7 +1725,7 @@ TEST_F(ArrowBridgeArrayImportAsOwnerTest, scalar) {
 TEST_F(ArrowBridgeArrayImportAsOwnerTest, without_nulls_buffer) {
   std::vector<std::optional<int64_t>> inputValues = {1, 2, 3, 4, 5};
   testImportWithoutNullsBuffer<int64_t>(inputValues, "l");
-  testImportWithoutNullsBuffer<Timestamp>(inputValues, "tsn");
+  testImportWithoutNullsBuffer<Timestamp>(inputValues, "tsn:");
 }
 
 TEST_F(ArrowBridgeArrayImportAsOwnerTest, string) {
