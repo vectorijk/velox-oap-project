@@ -110,16 +110,19 @@ struct Timestamp {
     VELOX_USER_DCHECK_LE(nanos, kMaxNanos, "Timestamp nanos out of range");
   }
 
-  static Timestamp fromDaysAndNanos(int32_t days, uint64_t nanos) {
+  static Timestamp fromDaysAndNanos(int32_t days, int64_t nanos) {
     static constexpr int64_t kJulianToUnixEpochDays = 2440588LL;
     static constexpr int64_t kSecondsPerDay = 86400LL;
     static constexpr int64_t kNanosPerSecond =
         Timestamp::kNanosecondsInMillisecond * Timestamp::kMillisecondsInSecond;
 
     int64_t seconds = (days - kJulianToUnixEpochDays) * kSecondsPerDay;
-    if (nanos > Timestamp::kMaxNanos) {
+    if (nanos > static_cast<int64_t>(Timestamp::kMaxNanos)) {
       seconds += nanos / kNanosPerSecond;
       nanos -= (nanos / kNanosPerSecond) * kNanosPerSecond;
+    } else if (nanos < 0) {
+      seconds += (nanos / kNanosPerSecond - 1);
+      nanos -= (nanos / kNanosPerSecond - 1) * kNanosPerSecond;
     }
 
     return Timestamp(seconds, nanos);
