@@ -26,6 +26,7 @@
 #include "velox/dwio/common/Reader.h"
 #include "velox/expression/Expr.h"
 #include "velox/expression/ExprToSubfieldFilter.h"
+#include "velox/type/TimestampConversion.h"
 
 namespace facebook::velox::connector::hive {
 
@@ -628,6 +629,14 @@ bool testFilters(
           VELOX_CHECK(handlesIter != partitionKeysHandle.end());
 
           // This is a non-null partition key
+          if (handlesIter->second->dataType()->isDate()) {
+            const auto result = util::castFromDateString(
+                StringView(iter->second.value()),
+                util::ParseMode::kStandardCast);
+            VELOX_CHECK(!result.hasError());
+            return applyFilter(*child->filter(), result.value());
+          }
+
           return applyPartitionFilter(
               handlesIter->second->dataType()->kind(),
               iter->second.value(),
