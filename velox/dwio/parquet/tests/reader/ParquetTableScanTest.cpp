@@ -815,11 +815,128 @@ TEST_F(ParquetTableScanTest, sessionTimezone) {
   assertSelectWithTimezone({"a"}, "SELECT a FROM tmp", "Asia/Shanghai");
 }
 
+TEST_F(ParquetTableScanTest, structSelection) {
+  auto vector = makeRowVector(
+      {makeFlatVector<std::string>({"Janet"}),
+       makeFlatVector<std::string>({"Jones"})});
+
+  loadData(
+      getExampleFilePath("contacts.parquet"),
+      ROW({"name"}, {ROW({"first", "last"}, {VARCHAR(), VARCHAR()})}),
+      makeRowVector(
+          {"t"},
+          {
+              vector,
+          }));
+  assertSelectWithFilter({"name"}, {}, "", "SELECT t from tmp");
+
+  loadData(
+      getExampleFilePath("contacts.parquet"),
+      ROW({"name"},
+          {ROW(
+              {"first", "middle", "last"}, {VARCHAR(), VARCHAR(), VARCHAR()})}),
+      makeRowVector(
+          {"t"},
+          {
+              vector,
+          }));
+  assertSelectWithFilter({"name"}, {}, "", "SELECT ('Janet', null, 'Jones')");
+
+  loadData(
+      getExampleFilePath("contacts.parquet"),
+      ROW({"name"}, {ROW({"first", "middle"}, {VARCHAR(), VARCHAR()})}),
+      makeRowVector(
+          {"t"},
+          {
+              vector,
+          }));
+  assertSelectWithFilter({"name"}, {}, "", "SELECT ('Janet', null)");
+
+  loadData(
+      getExampleFilePath("contacts.parquet"),
+      ROW({"name"}, {ROW({"middle", "last"}, {VARCHAR(), VARCHAR()})}),
+      makeRowVector(
+          {"t"},
+          {
+              vector,
+          }));
+  assertSelectWithFilter({"name"}, {}, "", "SELECT (null, 'Jones')");
+
+  loadData(
+      getExampleFilePath("contacts.parquet"),
+      ROW({"name"}, {ROW({"middle"}, {VARCHAR()})}),
+      makeRowVector(
+          {"t"},
+          {
+              vector,
+          }));
+  assertSelectWithFilter({"name"}, {}, "", "SELECT row(null)");
+
+  loadData(
+      getExampleFilePath("contacts.parquet"),
+      ROW({"name"}, {ROW({"middle", "info"}, {VARCHAR(), VARCHAR()})}),
+      makeRowVector(
+          {"t"},
+          {
+              vector,
+          }));
+  assertSelectWithFilter({"name"}, {}, "", "SELECT NULL");
+
+  /*loadData(
+      getExampleFilePath("contacts.parquet"),
+      ROW({"name"}, {ROW({}, {})}),
+      makeRowVector(
+          {"t"},
+          {
+              vector,
+          }));
+  assertSelectWithFilter({"name"}, {}, "", "SELECT row()");*/
+}
+
 TEST_F(ParquetTableScanTest, timestampInt96Dictionary) {
   WriterOptions options;
   options.writeInt96AsTimestamp = true;
   options.enableDictionary = true;
   testInt96TimestampRead(options);
+}
+
+TEST_F(ParquetTableScanTest, timestampFilter) {
+  // Timestamp-int96.parquet holds one column (t: TIMESTAMP) and
+  // 10 rows in one row group. Data is in SNAPPY compressed format.
+  // The values are:
+  // |t                  |
+  // +-------------------+
+  // |2015-06-01 19:34:56|
+  // |2015-06-02 19:34:56|
+  // |2001-02-03 03:34:06|
+  // |1998-03-01 08:01:06|
+  // |2022-12-23 03:56:01|
+  // |1980-01-24 00:23:07|
+  // |1999-12-08 13:39:26|
+  // |2023-04-21 09:09:34|
+  // |2000-09-12 22:36:29|
+  // |2007-12-12 04:27:56|
+  // +-------------------+
+  auto vector = makeFlatVector<Timestamp>(
+      {Timestamp(1433187296, 0),
+       Timestamp(1433273696, 0),
+       Timestamp(981171246, 0),
+       Timestamp(888739266, 0),
+       Timestamp(1671767761, 0),
+       Timestamp(317521387, 0),
+       Timestamp(944660366, 0),
+       Timestamp(1682068174, 0),
+       Timestamp(968798189, 0),
+       Timestamp(1197433676, 0)});
+
+  loadData(
+      getExampleFilePath("timestamp_int96.parquet"),
+      ROW({"t"}, {TIMESTAMP()}),
+      makeRowVector(
+          {"t"},
+          {
+              vector,
+          }));
 }
 
 TEST_F(ParquetTableScanTest, timestampInt96Plain) {
