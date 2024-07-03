@@ -45,7 +45,7 @@ function update_brew {
       DEFAULT_BREW_PATH=$(which brew) ;
   fi
   BREW_PATH=${BREW_PATH:-$DEFAULT_BREW_PATH}
-  $BREW_PATH update --auto-update --verbose
+  # $BREW_PATH update --auto-update --verbose
   $BREW_PATH developer off
 }
 
@@ -70,7 +70,7 @@ function install_build_prerequisites {
   do
     install_from_brew ${pkg}
   done
-  pip3 install --user cmake-format regex
+  # pip3 install --user cmake-format regex
 }
 
 function install_velox_deps_from_brew {
@@ -142,7 +142,7 @@ function install_velox_deps {
 (return 2> /dev/null) && return # If script was sourced, don't run commands.
 
 (
-  update_brew
+  # update_brew
   if [[ $# -ne 0 ]]; then
     for cmd in "$@"; do
       run_and_time "${cmd}"
