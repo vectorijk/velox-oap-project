@@ -97,12 +97,12 @@ function install_fizz {
 
 function install_wangle {
   github_checkout facebook/wangle "${FB_OS_VERSION}"
-  cmake_install -DBUILD_TESTS=OFF -S wangle
+  cmake_install -DBUILD_TESTS=OFF -DLIBUNWIND_LIBRARY=/usr/local/opt/libunwind-headers/include -S wangle
 }
 
 function install_mvfst {
     github_checkout facebook/mvfst "${FB_OS_VERSION}"
-    cmake_install -DBUILD_TESTS=OFF
+    cmake_install -DBUILD_TESTS=OFF -DLIBUNWIND_LIBRARY=/usr/local/opt/libunwind-headers/include
 }
 
 
@@ -136,7 +136,7 @@ function install_velox_deps {
   # run_and_time install_fizz
   run_and_time install_wangle
   run_and_time install_mvfst
-  run_and_time install_fbthrift
+  # run_and_time install_fbthrift
 }
 
 (return 2> /dev/null) && return # If script was sourced, don't run commands.
