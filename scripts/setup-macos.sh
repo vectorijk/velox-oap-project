@@ -87,7 +87,7 @@ function install_fmt {
 
 function install_folly {
   github_checkout facebook/folly "${FB_OS_VERSION}"
-  cmake_install -DBUILD_TESTS=OFF -DFOLLY_HAVE_INT128_T=ON -DLIBUNWIND_LIBRARY=/usr/local/opt/libunwind-headers/include -DLIBEVENT_LIBRARY=/usr/local/lib/
+  cmake_install -DBUILD_TESTS=OFF -DFOLLY_HAVE_INT128_T=ON -DLIBUNWIND_LIBRARY=/usr/local/opt/libunwind-headers/include -DLIBEVENT_INCLUDE_DIR=/usr/local/opt/libevent/include -DLIBEVENT_LIBRARY=/usr/local/opt/libevent/lib/libevent.dylib
 }
 
 function install_fizz {
