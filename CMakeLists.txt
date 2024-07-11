@@ -565,7 +565,7 @@ install(FILES velox/type/Type.h DESTINATION "include/velox")
 # Adding this down here prevents warnings in dependencies from stopping the
 # build
 if("${TREAT_WARNINGS_AS_ERRORS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -DLIBEVENT_LIBRARY=/usr/local/lib/")
 endif()
 
 if(VELOX_ENABLE_ARROW)
