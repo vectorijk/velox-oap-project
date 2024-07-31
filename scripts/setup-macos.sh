@@ -71,7 +71,7 @@ function install_build_prerequisites {
   do
     install_from_brew ${pkg}
   done
-  pip3 install --user cmake-format regex pyyaml
+  pip3 install --user cmake-format regex pyyaml --break-system-packages
 }
 
 function install_velox_deps_from_brew {
