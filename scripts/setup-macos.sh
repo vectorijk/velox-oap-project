@@ -35,9 +35,15 @@ PYTHON_VENV=${PYHTON_VENV:-"${SCRIPTDIR}/../.venv"}
 NPROC=$(getconf _NPROCESSORS_ONLN)
 
 DEPENDENCY_DIR=${DEPENDENCY_DIR:-$(pwd)}
+<<<<<<< HEAD
 MACOS_VELOX_DEPS="bison boost double-conversion flex gflags glog googletest icu4c libevent libsodium lz4 lzo openssl protobuf@21 simdjson snappy thrift xz xsimd zstd"
 MACOS_BUILD_DEPS="ninja cmake"
 FB_OS_VERSION="v2024.05.20.00"
+=======
+MACOS_VELOX_DEPS="bison boost double-conversion flex fmt gflags glog googletest icu4c libevent libsodium lz4 lzo openssl protobuf@21 simdjson snappy thrift xz xsimd zstd"
+MACOS_BUILD_DEPS="ninja cmake ccache"
+FB_OS_VERSION="v2024.07.29.00"
+>>>>>>> 1ffa9b163 (Update setup-macos.sh)
 FMT_VERSION="10.1.1"
 
 function update_brew {
@@ -76,7 +82,7 @@ function install_build_prerequisites {
     echo "Creating Python Virtual Environment at ${PYTHON_VENV}"
     python3 -m venv ${PYTHON_VENV}
   fi
-  source ${PYTHON_VENV}/bin/activate; pip3 install cmake-format regex pyyaml
+  source ${PYTHON_VENV}/bin/activate; pip3 install cmake-format regex pyyaml --break-system-packages
   wget -O ccache.tar.gz https://github.com/ccache/ccache/releases/download/v4.10.2/ccache-4.10.2-darwin.tar.gz
   tar -xf ccache.tar.gz
   mv ccache-4.10.2-darwin/ccache /usr/local/bin/
@@ -150,7 +156,7 @@ function install_velox_deps {
 (return 2> /dev/null) && return # If script was sourced, don't run commands.
 
 (
-  update_brew
+  # update_brew
   if [[ $# -ne 0 ]]; then
     for cmd in "$@"; do
       run_and_time "${cmd}"
