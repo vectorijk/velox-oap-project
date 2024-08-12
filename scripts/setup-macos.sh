@@ -36,7 +36,7 @@ NPROC=$(getconf _NPROCESSORS_ONLN)
 DEPENDENCY_DIR=${DEPENDENCY_DIR:-$(pwd)}
 MACOS_VELOX_DEPS="flex bison protobuf@21 icu4c boost gflags glog libevent lz4 lzo snappy xz zstd openssl libsodium"
 MACOS_BUILD_DEPS="ninja cmake ccache"
-FB_OS_VERSION="v2024.05.20.00"
+FB_OS_VERSION="v2024.07.29.00"
 FMT_VERSION="10.1.1"
 
 function update_brew {
@@ -71,7 +71,7 @@ function install_build_prerequisites {
   do
     install_from_brew ${pkg}
   done
-  pip3 install --user cmake-format regex pyyaml
+  pip3 install --user cmake-format regex pyyaml --break-system-packages
 }
 
 function install_velox_deps_from_brew {
@@ -142,7 +142,7 @@ function install_velox_deps {
 (return 2> /dev/null) && return # If script was sourced, don't run commands.
 
 (
-  update_brew
+  # update_brew
   if [[ $# -ne 0 ]]; then
     for cmd in "$@"; do
       run_and_time "${cmd}"
