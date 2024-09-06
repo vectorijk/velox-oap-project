@@ -34,7 +34,7 @@ PYTHON_VENV=${PYHTON_VENV:-"${SCRIPTDIR}/../.venv"}
 
 NPROC=$(getconf _NPROCESSORS_ONLN)
 
-7DEPENDENCY_DIR=${DEPENDENCY_DIR:-$(pwd)}
+DEPENDENCY_DIR=${DEPENDENCY_DIR:-$(pwd)}
 MACOS_VELOX_DEPS="bison boost double-conversion flex gflags glog googletest icu4c libevent libsodium lz4 lzo openssl protobuf@21 simdjson snappy thrift xz xsimd zstd"
 MACOS_BUILD_DEPS="ninja cmake"
 FB_OS_VERSION="v2024.07.29.00"
