@@ -34,16 +34,10 @@ PYTHON_VENV=${PYHTON_VENV:-"${SCRIPTDIR}/../.venv"}
 
 NPROC=$(getconf _NPROCESSORS_ONLN)
 
-DEPENDENCY_DIR=${DEPENDENCY_DIR:-$(pwd)}
-<<<<<<< HEAD
+7DEPENDENCY_DIR=${DEPENDENCY_DIR:-$(pwd)}
 MACOS_VELOX_DEPS="bison boost double-conversion flex gflags glog googletest icu4c libevent libsodium lz4 lzo openssl protobuf@21 simdjson snappy thrift xz xsimd zstd"
 MACOS_BUILD_DEPS="ninja cmake"
-FB_OS_VERSION="v2024.05.20.00"
-=======
-MACOS_VELOX_DEPS="bison boost double-conversion flex fmt gflags glog googletest icu4c libevent libsodium lz4 lzo openssl protobuf@21 simdjson snappy thrift xz xsimd zstd"
-MACOS_BUILD_DEPS="ninja cmake ccache"
 FB_OS_VERSION="v2024.07.29.00"
->>>>>>> 1ffa9b163 (Update setup-macos.sh)
 FMT_VERSION="10.1.1"
 
 function update_brew {
