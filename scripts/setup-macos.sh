@@ -85,7 +85,7 @@ function install_build_prerequisites {
     echo "Creating Python Virtual Environment at ${PYTHON_VENV}"
     python3 -m venv ${PYTHON_VENV}
   fi
-  source ${PYTHON_VENV}/bin/activate; pip3 install cmake-format regex pyyaml
+  source ${PYTHON_VENV}/bin/activate; pip3 install cmake-format regex pyyaml --break-system-packages
   if [ ! -f /usr/local/bin/ccache ]; then
     curl -L https://github.com/ccache/ccache/releases/download/v4.10.2/ccache-4.10.2-darwin.tar.gz > ccache.tar.gz
     tar -xf ccache.tar.gz
@@ -193,7 +193,7 @@ function install_velox_deps {
 (return 2> /dev/null) && return # If script was sourced, don't run commands.
 
 (
-  update_brew
+  # update_brew
   if [[ $# -ne 0 ]]; then
     for cmd in "$@"; do
       run_and_time "${cmd}"
