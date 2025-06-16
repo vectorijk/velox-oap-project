@@ -46,7 +46,7 @@ function install_folly {
   # shellcheck disable=SC2034
   EXTRA_PKG_CXXFLAGS=" -DFOLLY_CFG_NO_COROUTINES"
   wget_and_untar https://github.com/facebook/folly/archive/refs/tags/"${FB_OS_VERSION}".tar.gz folly
-  cmake_install_dir folly -DBUILD_SHARED_LIBS="$VELOX_BUILD_SHARED" -DBUILD_TESTS=OFF -DFOLLY_HAVE_INT128_T=ON
+  cmake_install_dir folly -DBUILD_SHARED_LIBS="$VELOX_BUILD_SHARED" -DBUILD_TESTS=OFF -DFOLLY_HAVE_INT128_T=ON -DCMAKE_CXX_FLAGS="-fpermissive"
 }
 
 function install_fizz {
@@ -55,7 +55,7 @@ function install_fizz {
   # shellcheck disable=SC2034
   EXTRA_PKG_CXXFLAGS=" -DFOLLY_CFG_NO_COROUTINES"
   wget_and_untar https://github.com/facebookincubator/fizz/archive/refs/tags/"${FB_OS_VERSION}".tar.gz fizz
-  cmake_install_dir fizz/fizz -DBUILD_TESTS=OFF
+  cmake_install_dir fizz/fizz -DBUILD_TESTS=OFF -DFOLLY_ASSUME_AVX2=OFF
 }
 
 function install_fast_float {
@@ -87,7 +87,7 @@ function install_fbthrift {
   # shellcheck disable=SC2034
   EXTRA_PKG_CXXFLAGS=" -DFOLLY_CFG_NO_COROUTINES"
   wget_and_untar https://github.com/facebook/fbthrift/archive/refs/tags/"${FB_OS_VERSION}".tar.gz fbthrift
-  cmake_install_dir fbthrift -Denable_tests=OFF -DBUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF
+  cmake_install_dir fbthrift -Denable_tests=OFF -DBUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations"
 }
 
 function install_duckdb {

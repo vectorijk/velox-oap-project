@@ -87,7 +87,7 @@ function install_build_prerequisites {
     python3 -m venv "${PYTHON_VENV}"
   fi
   source "${PYTHON_VENV}"/bin/activate
-  pip3 install cmake-format regex pyyaml
+  pip3 install cmake-format regex pyyaml --break-system-packages
 
   # Install ccache
   curl -L https://github.com/ccache/ccache/releases/download/v"${CCACHE_VERSION}"/ccache-"${CCACHE_VERSION}"-darwin.tar.gz -o ccache.tar.gz
@@ -198,7 +198,7 @@ function install_velox_deps {
 (return 2>/dev/null) && return # If script was sourced, don't run commands.
 
 (
-  update_brew
+  # update_brew
   if [[ $# -ne 0 ]]; then
     for cmd in "$@"; do
       run_and_time "${cmd}"
