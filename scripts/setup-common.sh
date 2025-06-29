@@ -52,7 +52,7 @@ function install_fizz {
   # causes issues (build, link) if the selection is not consistent across users of folly.
   EXTRA_PKG_CXXFLAGS=" -DFOLLY_CFG_NO_COROUTINES"
   wget_and_untar https://github.com/facebookincubator/fizz/archive/refs/tags/${FB_OS_VERSION}.tar.gz fizz
-  cmake_install_dir fizz/fizz -DBUILD_TESTS=OFF
+  cmake_install_dir fizz/fizz -DBUILD_TESTS=OFF -DCMAKE_CXX_FLAGS="-march=native -mavx2 -mfma -mavx -mf16c -mlzcnt -mbmi2"
 }
 
 function install_fast_float {
