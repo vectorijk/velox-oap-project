@@ -246,6 +246,7 @@ function install_faiss {
       -DFAISS_ENABLE_PYTHON=OFF \
       -DFAISS_ENABLE_REMOTE=OFF \
       -DFAISS_ENABLE_GPU_TESTS=OFF \
+      -DCMAKE_CXX_COMPILER="/usr/local/bin/clang++"\
       -DFAISS_ENABLE_BENCHMARKS=OFF -DCMAKE_CXX_FLAGS="-stdlib=libc++ -nostdinc++ -Xpreprocessor -fopenmp  -I/usr/lib/llvm-11/lib/clang/11.0.1/include  -fPIC -stdlib=libc++ -isystem /usr/lib/llvm-11/include/c++/v1 -isystem /usr/lib/llvm-11/lib/clang/11.0.1/include -isystem /usr/include" \
       -DOpenMP_CXX_LIB_NAMES="omp" \
       -DOpenMP_CXX_FLAGS="-stdlib=libc++ -nostdinc++ -Xpreprocessor -fopenmp  -I/usr/lib/llvm-11/lib/clang/11.0.1/include  -fPIC -stdlib=libc++ -isystem /usr/lib/llvm-11/include/c++/v1 -isystem /usr/lib/llvm-11/lib/clang/11.0.1/include -isystem /usr/include" \
