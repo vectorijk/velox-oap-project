@@ -246,7 +246,7 @@ function install_faiss {
       -DFAISS_ENABLE_PYTHON=OFF \
       -DFAISS_ENABLE_REMOTE=OFF \
       -DFAISS_ENABLE_GPU_TESTS=OFF \
-      -DFAISS_ENABLE_BENCHMARKS=OFF -DCMAKE_CXX_FLAGS="-Xpreprocessor -fopenmp -I/usr/include/libomp"
+      -DFAISS_ENABLE_BENCHMARKS=OFF -DCMAKE_CXX_FLAGS="-Xpreprocessor -fopenmp -I/usr/include"
   fi
 }
 
