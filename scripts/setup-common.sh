@@ -246,7 +246,9 @@ function install_faiss {
       -DFAISS_ENABLE_PYTHON=OFF \
       -DFAISS_ENABLE_REMOTE=OFF \
       -DFAISS_ENABLE_GPU_TESTS=OFF \
-      -DFAISS_ENABLE_BENCHMARKS=OFF -DCMAKE_CXX_FLAGS="-Xpreprocessor -fopenmp -I/usr/include"
+      -DFAISS_ENABLE_BENCHMARKS=OFF -DCMAKE_CXX_FLAGS="-Xpreprocessor -fopenmp -I/usr/include" \
+      -DOpenMP_CXX_LIB_NAMES="omp" \
+      -DOpenMP_omp_LIBRARY=/usr/lib/llvm-11/lib/libomp.so
   fi
 }
 
